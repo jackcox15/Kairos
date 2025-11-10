@@ -10,8 +10,9 @@ Kairos strives to simplify the setup of LoRa radios, and organically build local
 - Hardware Integration – Plug and play RNode devices with automated firmware flashing, and PHY settings 
 - User Interface - MeshChat web UI instead of command line only, RaspberryPi Python programs
 - Infrastructure Setup - VPS backbone with WireGuard VPN for global connectivity 
-- Operational Security – Built in OpSec practices for adversarial environments 
-The Goal: Anyone should be able to plug in a USB drive, connect an RNode, and have a working mesh node in minutes.
+- Operational Security – Built in OpSec practices for adversarial environments
+
+  *The Goal: Anyone should be able to plug in a USB drive, connect an RNode, and have a working mesh node in minutes.*
 
 Three Layers:
 1. VPS Backbone - Redundant servers for global connectivity
