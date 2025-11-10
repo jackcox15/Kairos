@@ -48,11 +48,11 @@ Option 3: RNode Gateway
 - 3.5" LCD with real-time status monitoring 
  
 # Technology Stack
-## Core:
+#### Core:
 - Reticulum Network Stack - Mesh routing protocol 
 - RNode - LoRa radio interfaces 
 - WireGuard - VPN backbone connectivity 
-## Applications:
+#### Applications:
 - MeshChat - Web messaging UI 
 - Nomadnet - Mesh services platform 
 - LXMF - Lightweight message format 
