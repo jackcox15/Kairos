@@ -4,7 +4,7 @@ Kairos provides the toolkits, configuration, and workflows needed to deploy and 
 
 Kairos combines internet-based infrastructure (utilizing securely owned virtual private servers + WireGuard) with local LoRa radio networks to create communications that work with or without internet connectivity.
 The system is designed for graceful degradation: as infrastructure fails, the network automatically falls back from:
-#### global → regional → local only operation.
+#### GLOBAL → REGIONAL → LOCAL ONLY
 
 ## What Problem Does This Solve?
 Reticulum is a powerful cryptographic network protocol, but deploying it at scale for non-tech savvy people can be difficult. 
