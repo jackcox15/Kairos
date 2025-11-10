@@ -62,7 +62,7 @@ Kairos represents a different approach to technology infrastructure:
 - Not a Service. No company, no terms of service, no data collection
 - Not a Startup. No investors, no exit strategy, no growth metrics 
 #### Instead:
-##**Community owned infrastructure built through mutual aid principles.**
+## **Community owned infrastructure built through mutual aid principles.**
 #### Target Audience: Trusted network of vetted individuals distributed through small cells of aligned individuals. This is intentionally not mass-market, it's infrastructure for communities who need it.
 
 # Community & Contribution
