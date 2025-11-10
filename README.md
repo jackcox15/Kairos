@@ -65,11 +65,10 @@ Kairos represents a different approach to technology infrastructure:
 - Not a Startup. No investors, no exit strategy, no growth metrics 
 #### Instead:
 **Community owned infrastructure built through mutual aid principles.**
-#### Target Audience:
-Trusted network of vetted individuals distributed through small cells of aligned individuals. This is intentionally not mass-market, it's infrastructure for communities who need it.
+#### Target Audience: Trusted network of vetted individuals distributed through small cells of aligned individuals. This is intentionally not mass-market, it's infrastructure for communities who need it.
 
 # Community & Contribution
-Getting Involved
+#### Getting Involved
 Kairos operates through trust networks rather than public channels. We carefully vet new participants:
 - Personal connections and trusted referrals preferred 
 - Mutual aid groups and community organizations prioritized 
@@ -85,16 +84,16 @@ See CONTRIBUTING.md for guidelines.
 
 # Credits
 Kairos is built on the incredible work of:
-Mark Qvist (@markqvist) - Creator of Reticulum, RNode, Nomadnet, and LXMF. This project would not exist without the foundational work Mark has done on the protocol and ecosystem.
-Liam Cottle (@liamcottle) - Creator of MeshChat web interface, providing an accessible UI for Reticulum messaging.
-Kairos is integration and deployment work. Taking these excellent open source tools and making them accessible to non-technical users who need resilient communications.
+- Mark Qvist (@markqvist) - Creator of Reticulum, RNode, Nomadnet, and LXMF. This project would not exist without the foundational work Mark has done on the protocol and ecosystem.
+- Liam Cottle (@liamcottle) - Creator of MeshChat web interface, providing an accessible UI for Reticulum messaging.
+**Kairos is integration and deployment work. Taking these excellent open source tools and making them accessible to non-technical users who need resilient communications.**
 
-Note on OpSec: While code is open source, operational details (node locations, user identities, deployment strategies) remain confidential. Please respect the security needs of communities using this infrastructure.
+#### Note on OPSEC: While code is open source, operational details (node locations, user identities, deployment strategies) remain confidential. Please respect the security needs of communities using this infrastructure.
 
 ## Contact
-For Technical Questions About Reticulum:
-See the Reticulum community forums
-For KAIROS Deployment:
-This project operates through trusted networks. If you're involved with mutual aid or community organizing and share our values, reach out through existing community channels, or on Github.
+#### For Technical Questions About Reticulum:
+- See the Reticulum community forums
+#### For KAIROS Deployment:
+- This project operates through trusted networks. If you're involved with mutual aid or community organizing and share our values, reach out through existing community channels, or on Github.
 
 "The best time to build resilient infrastructure was yesterday. The second best time is today."
