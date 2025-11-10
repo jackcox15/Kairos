@@ -1,7 +1,8 @@
 # KAIROS “Infrastructure as Mutual Aid”
 Kairos is a complete deployment system for Reticulum mesh networks, focused on making resilient communications accessible to mutual aid groups, community organizers, and local emergency response networks.
 
-It combines internet backbone infrastructure (VPS + WireGuard) with local LoRa radio networks to create communications that work with or without internet connectivity. The system is designed for graceful degradation: as infrastructure fails, the network automatically falls back from global → regional → local only operation.
+It combines internet backbone infrastructure (VPS + WireGuard) with local LoRa radio networks to create communications that work with or without internet connectivity.
+ The system is designed for graceful degradation: as infrastructure fails, the network automatically falls back from global → regional → local only operation.
 
 ## What Problem Does This Solve?
 Reticulum is powerful, but deploying it for non-technical users is hard.
@@ -12,7 +13,7 @@ Kairos strives to simplify the setup of LoRa radios, and organically build local
 - Infrastructure Setup - VPS backbone with WireGuard VPN for global connectivity 
 - Operational Security – Built in OpSec practices for adversarial environments
 
-  *The Goal: Anyone should be able to plug in a USB drive, connect an RNode, and have a working mesh node in minutes.*
+  *The Goal: Anyone should be able to plug in a USB drive, or RaspberryPi, connect an RNode, and have a working mesh node in minutes.*
 
 Three Layers:
 1. VPS Backbone - Redundant servers for global connectivity
@@ -30,7 +31,8 @@ Every node requires:
 - Computer (x86 mini PC or Raspberry Pi) 
 - LoRa RNode (Heltec v3, LILYGO T-Beam, LoRa32, etc.) 
 - USB cable to connect them 
-Deployment Options
+
+## Deployment Options
 Option 1: Live USB (Recommended for technical users)
 - Bootable Ubuntu system with automated setup 
 - Works on any x86 computer without permanent installation 
@@ -46,33 +48,12 @@ Option 3: RNode Gateway
 - Plug and play for non-technical users 
 - 3.5" LCD with real-time status monitoring 
  
-
-# Real-World Use Cases
-## Urban Mutual Aid Network
-12-person collective, 3-5 square miles:
-- Central node at community center 
-- 2 rooftop deployments for elevation 
-- Individual window nodes for members 
-- Range: 1-3 miles between nodes 
-## Rural Community Network
-25+ square miles, farming community:
-- Central node setup high  
-- Farm based nodes with directional antennas 
-- Solar powered remote nodes 
-- Range: 5-15 miles between elevated nodes 
-## Mobile Event Communications
-Temporary deployment for protests/festivals:
-- Backpack nodes with battery banks 
-- Mobile base station  
-- Pre-staged repeaters if location known 
-- Secure coordination without cellular infrastructure 
-
 # Technology Stack
-Core:
+## Core:
 - Reticulum Network Stack - Mesh routing protocol 
 - RNode - LoRa radio interfaces 
 - WireGuard - VPN backbone connectivity 
-Applications:
+## Applications:
 - MeshChat - Web messaging UI 
 - Nomadnet - Mesh services platform 
 - LXMF - Lightweight message format 
