@@ -1,5 +1,5 @@
-# Kairos: “Infrastructure as Mutual Aid”
-Kairos is a complete deployment system for Reticulum mesh networks, focused on making resilient communications accessible to mutual aid groups, community organizers, and local emergency response networks.
+# What is Kairos?
+Kairos is a complete deployment system for Reticulum mesh networks, focused on making resilient communications accessible to mutual aid groups, community organizers, and local emergency response networks. 
 
 It combines internet backbone infrastructure (utilizing virtual private servers + WireGuard) with local LoRa radio networks to create communications that work with or without internet connectivity.
 The system is designed for graceful degradation: as infrastructure fails, the network automatically falls back from:
@@ -83,7 +83,8 @@ See CONTRIBUTING.md for guidelines.
 Kairos is built on the incredible work of:
 - Mark Qvist (@markqvist) - Creator of Reticulum, RNode, Nomadnet, and LXMF. This project would not exist without the foundational work Mark has done on the protocol and ecosystem.
 - Liam Cottle (@liamcottle) - Creator of MeshChat web interface, providing an accessible UI for Reticulum messaging.
--**Kairos is integration and deployment work. Taking these excellent open source tools and making them accessible to non-technical users who need resilient communications.**
+  
+**Kairos is integration and deployment work. Taking these excellent open source tools and making them accessible to non-technical users who need resilient communications.**
 
 #### Note on OPSEC: While code is open source, operational details (node locations, user identities, deployment strategies) remain confidential. Please respect the security needs of communities using this infrastructure.
 
