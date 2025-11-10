@@ -25,8 +25,8 @@ Graceful Degradation:
 - Infrastructure seized → Device-to-device via LoRa 
 
 # Quick Start
-## Hardware You Need
-## Every node requires:
+**Hardware You Need**
+#### Every node requires:
 - Computer (x86 mini PC or Raspberry Pi) 
 - LoRa RNode (Heltec v3, LILYGO T-Beam, LoRa32, etc.) 
 - USB cable to connect them 
