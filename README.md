@@ -25,7 +25,6 @@ Graceful Degradation:
 - Infrastructure seized → Device-to-device via LoRa 
 
 # Quick Start
-**Hardware You Need**
 #### Every node requires:
 - Computer (x86 mini PC or Raspberry Pi) 
 - LoRa RNode (Heltec v3, LILYGO T-Beam, LoRa32, etc.) 
@@ -38,9 +37,9 @@ Option 1: Live USB (Recommended for technical users)
 - Scripts to automate LoRa Config, and easily manage the system
 
 Option 2: RNode Box (Raspberry Pi relay/repeater)
-- Pre-built Pi Zero system with display 
+- Pre-built Pi Zero system with Pimornai ST7789 display 
 - Solar + battery power for field deployment 
-- LoRa device connected to USB hub, or via MicroUSB cable. 
+- LoRa device connected to USB hub, or via MicroUSB cable 
       
 Option 3: RNode Gateway
 - Raspberry Pi with WiFi AP and web interface 
