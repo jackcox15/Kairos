@@ -1,6 +1,5 @@
-# KAIROS
-“Infrastructure as Mutual Aid”
-#### Kairos is a complete deployment system for Reticulum mesh networks, focused on making resilient communications accessible to mutual aid groups, community organizers, and local emergency response networks.
+# KAIROS “Infrastructure as Mutual Aid”
+Kairos is a complete deployment system for Reticulum mesh networks, focused on making resilient communications accessible to mutual aid groups, community organizers, and local emergency response networks.
 It combines internet backbone infrastructure (VPS + WireGuard) with local LoRa radio networks to create communications that work with or without internet connectivity. The system is designed for graceful degradation: as infrastructure fails, the network automatically falls back from global → regional → local only operation.
 
 ## What Problem Does This Solve?
