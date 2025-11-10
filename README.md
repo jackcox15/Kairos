@@ -1,8 +1,8 @@
-# KAIROS “Infrastructure as Mutual Aid”
+# Kairos: “Infrastructure as Mutual Aid”
 Kairos is a complete deployment system for Reticulum mesh networks, focused on making resilient communications accessible to mutual aid groups, community organizers, and local emergency response networks.
 
 It combines internet backbone infrastructure (VPS + WireGuard) with local LoRa radio networks to create communications that work with or without internet connectivity.
- The system is designed for graceful degradation: as infrastructure fails, the network automatically falls back from global → regional → local only operation.
+The system is designed for graceful degradation: as infrastructure fails, the network automatically falls back from global → regional → local only operation.
 
 ## What Problem Does This Solve?
 Reticulum is powerful, but deploying it for non-technical users is hard.
@@ -13,7 +13,7 @@ Kairos strives to simplify the setup of LoRa radios, and organically build local
 - Infrastructure Setup - VPS backbone with WireGuard VPN for global connectivity 
 - Operational Security – Built in OpSec practices for adversarial environments
 
-  *The Goal: Anyone should be able to plug in a USB drive, or RaspberryPi, connect an RNode, and have a working mesh node in minutes.*
+*The Goal: Anyone should be able to plug in a USB drive, or RaspberryPi, connect an RNode, and have a working mesh node in minutes.*
 
 Three Layers:
 1. VPS Backbone - Redundant servers for global connectivity
@@ -63,7 +63,7 @@ Kairos represents a different approach to technology infrastructure:
 - Not a Product - No app stores, no subscriptions, no platforms
 - Not a Service - No company, no terms of service, no data collection
 - Not a Startup - No investors, no exit strategy, no growth metrics
-## Instead:
+ Instead:
 **Community owned infrastructure built through mutual aid principles. Technology serving people, not extracting value from them.
 Target Audience:
 Trusted network of vetted individuals distributed through small cells of aligned individuals. This is intentionally not mass-market, it's infrastructure for communities who need it.**
