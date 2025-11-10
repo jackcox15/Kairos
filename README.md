@@ -6,22 +6,22 @@ It combines internet backbone infrastructure (VPS + WireGuard) with local LoRa r
 ## What Problem Does This Solve?
 Reticulum is powerful, but deploying it for non-technical users is hard.
 Kairos strives to simplify the setup of LoRa radios, and organically build local resilient communication networks with minimum effort.
-    • Automated Deployment - Live USB systems that come preconfigured 
-    • Hardware Integration – Plug and play RNode devices with automated firmware flashing, and PHY settings 
-    • User Interface - MeshChat web UI instead of command line only, RaspberryPi Python programs
-    • Infrastructure Setup - VPS backbone with WireGuard VPN for global connectivity 
-    • Operational Security – Built in OpSec practices for adversarial environments 
+- Automated Deployment - Live USB systems that come preconfigured 
+- Hardware Integration – Plug and play RNode devices with automated firmware flashing, and PHY settings 
+- User Interface - MeshChat web UI instead of command line only, RaspberryPi Python programs
+- Infrastructure Setup - VPS backbone with WireGuard VPN for global connectivity 
+- Operational Security – Built in OpSec practices for adversarial environments 
 The Goal: Anyone should be able to plug in a USB drive, connect an RNode, and have a working mesh node in minutes.
 
 Three Layers:
 1. VPS Backbone - Redundant servers for global connectivity
-2.  Home Nodes - Your computer + RNode bridging internet and RF mesh
-3.   LoRa Network - Local radio mesh (1-20+ mile range, works without internet)
+2. Home Nodes - Your computer + RNode bridging internet and RF mesh
+3. LoRa Network - Local radio mesh (1-20+ mile range, works without internet)
    
 Graceful Degradation:
-• Internet works → Global mesh via VPS + local LoRa
-• Internet fails → Local LoRa mesh only 
-• Infrastructure seized → Device-to-device via LoRa 
+- Internet works → Global mesh via VPS + local LoRa
+- Internet fails → Local LoRa mesh only
+- Infrastructure seized → Device-to-device via LoRa 
 
 # Quick Start
 Hardware You Need
