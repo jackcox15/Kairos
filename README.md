@@ -1,7 +1,8 @@
 # What is Kairos?
-Kairos is a complete deployment system for Reticulum mesh networks, focused on making resilient communications accessible to mutual aid groups, community organizers, and local emergency response networks. 
+Kairos is a complete, reproducible deployment system for Reticulum based mesh networks. Its purpose is to make resilient, censorship resistant communication practical and accessible for mutual aid groups, community organizers, independent press, and privacy focused individuals.
+Kairos provides the toolkits, configuration, and workflows needed to deploy and maintain mesh communication nodes on laptops, Raspberry Pis, or LoRa devices with minimal setup and no centralized authority. It turns complex networking into a "plug-and-operate" system, enabling communities to build and maintain their own communication infrastructure even in degraded, surveilled, or disconnected environments.
 
-It combines internet backbone infrastructure (utilizing virtual private servers + WireGuard) with local LoRa radio networks to create communications that work with or without internet connectivity.
+Kairos combines internet-based infrastructure (utilizing securely owned virtual private servers + WireGuard) with local LoRa radio networks to create communications that work with or without internet connectivity.
 The system is designed for graceful degradation: as infrastructure fails, the network automatically falls back from:
 #### global → regional → local only operation.
 
@@ -82,7 +83,10 @@ See CONTRIBUTING.md for guidelines.
 # Credits
 Kairos is built on the incredible work of:
 - Mark Qvist (@markqvist) - Creator of Reticulum, RNode, Nomadnet, and LXMF. This project would not exist without the foundational work Mark has done on the protocol and ecosystem.
+Checkout the Reticulum Github: https://github.com/markqvist/Reticulum
+
 - Liam Cottle (@liamcottle) - Creator of MeshChat web interface, providing an accessible UI for Reticulum messaging.
+Checkout the Reticulum-Meshchat Github: (https://github.com/liamcottle/reticulum-meshchat)
   
 **Kairos is integration and deployment work. Taking these excellent open source tools and making them accessible to non-technical users who need resilient communications.**
 
@@ -90,7 +94,7 @@ Kairos is built on the incredible work of:
 
 ## Contact
 #### For Technical Questions About Reticulum:
-- See the Reticulum community forums
+- See the Reticulum community forums (https://github.com/markqvist/Reticulum/discussions)
 #### For KAIROS Deployment:
 - This project operates through trusted networks. If you're involved with mutual aid or community organizing and share our values, reach out through existing community channels, or on Github.
 
