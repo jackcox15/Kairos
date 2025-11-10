@@ -86,7 +86,7 @@ See CONTRIBUTING.md for guidelines.
 Kairos is built on the incredible work of:
 - Mark Qvist (@markqvist) - Creator of Reticulum, RNode, Nomadnet, and LXMF. This project would not exist without the foundational work Mark has done on the protocol and ecosystem.
 - Liam Cottle (@liamcottle) - Creator of MeshChat web interface, providing an accessible UI for Reticulum messaging.
-**Kairos is integration and deployment work. Taking these excellent open source tools and making them accessible to non-technical users who need resilient communications.**
+-**Kairos is integration and deployment work. Taking these excellent open source tools and making them accessible to non-technical users who need resilient communications.**
 
 #### Note on OPSEC: While code is open source, operational details (node locations, user identities, deployment strategies) remain confidential. Please respect the security needs of communities using this infrastructure.
 
