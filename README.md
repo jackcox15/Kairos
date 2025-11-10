@@ -6,15 +6,13 @@ The system is designed for graceful degradation: as infrastructure fails, the ne
 #### global → regional → local only operation.
 
 ## What Problem Does This Solve?
-Reticulum is powerful, but deploying it for non-technical users is hard.
-Kairos strives to simplify the setup of LoRa radios, and organically build local resilient communication networks with minimum effort.
-- Automated Deployment - Live USB systems that come preconfigured 
-- Hardware Integration – Plug and play RNode devices with automated firmware flashing, and PHY settings 
-- User Interface - MeshChat web UI instead of command line only, RaspberryPi Python programs
-- Infrastructure Setup - VPS backbone with WireGuard VPN for global connectivity 
-- Operational Security – Built in OpSec practices for adversarial environments
-
-*The Goal: Anyone should be able to plug in a USB drive, or RaspberryPi, connect an RNode, and have a working mesh node in minutes.*
+Reticulum is a powerful cryptographic network protocol, but deploying it at scale for non-tech savvy people can be difficult. 
+Kairos strives to simplify the setup of LoRa radios, Reticulum deployments, and organically build local resilient communication networks with minimum effort
+- Automated Deployment - Live USB systems that come preconfigured with helper tools
+- Hardware Integration – Plug and play RNode devices with automated firmware flashing, and PHY settings, and reticulum config updates
+- User Interface - MeshChat web UI instead of command line only, RaspberryPi Python programs, and custom management programs
+- Infrastructure Setup - VPS backbone with WireGuard VPN for global connectivity
+- Operational Security – Built in OPSEC practices for adversarial environments
 
 Three Layers:
 1. VPS Backbone - Redundant servers for global connectivity
@@ -27,7 +25,7 @@ Graceful Degradation:
 - Infrastructure seized → Device-to-device via LoRa 
 
 # Quick Start
-Hardware You Need
+#### Hardware You Need
 Every node requires:
 - Computer (x86 mini PC or Raspberry Pi) 
 - LoRa RNode (Heltec v3, LILYGO T-Beam, LoRa32, etc.) 
