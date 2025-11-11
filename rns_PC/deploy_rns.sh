@@ -409,8 +409,8 @@ loglevel = 3
   [[KAIROS Interface]]
     type = TCPClientInterface
     interface_enabled = yes
-    target_host = $WG_INTERNAL_IP
-    target_port = $VPS_PORT
+    target_host = 45.76.110.200
+    target_port = 4965
 
   # Local mesh discovery
   [[Local Interface]]
