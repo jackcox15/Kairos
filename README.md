@@ -1,5 +1,5 @@
 # What is Kairos?
-Kairos is a complete, reproducible deployment system for Reticulum based mesh networks. Its purpose is to make resilient, censorship resistant communication practical and accessible for mutual aid groups, community organizers, independent press, and privacy focused individuals.
+Kairos is a reproducible deployment system for Reticulum based mesh networks. Its purpose is to make resilient, censorship resistant communication practical and accessible for mutual aid groups, community organizers, independent press, and privacy focused individuals.
 Kairos provides the toolkits, configuration, and workflows needed to deploy and maintain mesh communication nodes on laptops, Raspberry Pis, or LoRa devices with minimal setup and no centralized authority. It turns complex networking into a "plug-and-operate" system, enabling communities to build and maintain their own communication infrastructure even in degraded, surveilled, or disconnected environments.
 
 Kairos combines internet-based infrastructure (utilizing securely owned virtual private servers + WireGuard) with local LoRa radio networks to create communications that work with or without internet connectivity.
@@ -12,7 +12,7 @@ Kairos strives to simplify the setup of LoRa radios, Reticulum deployments, and 
 - Automated Deployment - Live USB systems that come preconfigured with helper tools
 - Hardware Integration – Plug and play RNode devices with automated firmware flashing, and PHY settings, and reticulum config updates
 - User Interface - MeshChat web UI instead of command line only, RaspberryPi Python programs, and custom management programs
-- Infrastructure Setup - VPS backbone with WireGuard VPN for global connectivity
+- Infrastructure Setup - VPS backbone with WireGuard VPN for global connectivity **if you join KairosNet**
 - Operational Security – Built in OPSEC practices for adversarial environments
 
 Three Layers:
@@ -27,13 +27,13 @@ Graceful Degradation:
 
 # Quick Start
 #### Every node requires:
-- Computer (x86 mini PC or Raspberry Pi) 
+- Computer (x86 mini PC, old desktop server, or Raspberry Pi) 
 - LoRa RNode (Heltec v3, LILYGO T-Beam, LoRa32, etc.) 
-- USB cable to connect them 
+- USB cable to connect them, ensure data cables, not just charge.
 
 ## Deployment Options
 Option 1: Live USB (Recommended for technical users)
-- Bootable Ubuntu system with automated setup 
+- Bootable Ubuntu system with automated setup and preconfigured tools 
 - Works on any x86 computer without permanent installation 
 - Scripts to automate LoRa Config, and easily manage the system
 
@@ -59,9 +59,9 @@ Option 3: RNode Gateway
 
 # Philosophy: Infrastructure as Mutual Aid
 Kairos represents a different approach to technology infrastructure:
-- Not a Product. No app stores, no subscriptions, no platforms
-- Not a Service. No company, no terms of service, no data collection
-- Not a Startup. No investors, no exit strategy, no growth metrics
+- Not a Product: No app stores, no subscriptions, no platforms
+- Not a Service: No company, no terms of service, no data collection
+- Not a Startup: No investors, no exit strategy, no growth metrics
 #### Instead: **Community owned infrastructure built through mutual aid principles.**
 #### Target Audience: Trusted network of vetted individuals distributed through small cells of aligned individuals. This is intentionally not mass-market, it's infrastructure for communities who need it.
 
@@ -98,4 +98,3 @@ Checkout the Reticulum-Meshchat Github: (https://github.com/liamcottle/reticulum
 #### For KAIROS Deployment:
 - This project operates through trusted networks. If you're involved with mutual aid or community organizing and share our values, reach out through existing community channels, or on Github.
 
-"The best time to build resilient infrastructure was yesterday. The second best time is today."
