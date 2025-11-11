@@ -18,8 +18,14 @@ VPS_PORT=8000
 REPO=https://github.com/liamcottle/reticulum-meshchat
 INSTALL_DIR="/opt/reticulum-meshchat"
 
-TARGET_USER=$USER
-USER_HOME="$HOME"
+# Get user who ran sudo, avoids everything install in root
+if [ -n "$SUDO_USER" ]; then
+    TARGET_USER="$SUDO_USER"
+    USER_HOME=$(eval echo ~"$SUDO_USER")
+else
+    TARGET_USER="$USER"
+    USER_HOME="$HOME"
+fi
 
 # WireGuard config (replaced by key_baker.sh if using KAIROSnet)
 WG_PRIVATE_KEY="__REPLACE_PRIVATE_KEY__"
@@ -292,7 +298,7 @@ install_python_packages() {
         local success=false
         
         while [ $retry -lt 3 ] && [ "$success" = false ]; do
-            if python3 -m pip install --break-system-packages --upgrade "$package" 2>/dev/null; then
+            if sudo -u "$TARGET_USER" python3 -m pip install --user --break-system-packages --upgrade "$package" 2>/dev/null; then
                 success=true
                 echo -e "${GREEN}✓ $package${NC}"
             else
@@ -304,7 +310,7 @@ install_python_packages() {
                     # Try base package name without version
                     local base_package=$(echo "$package" | cut -d'>' -f1 | cut -d'<' -f1 | cut -d'=' -f1)
                     
-                    if python3 -m pip install --break-system-packages "$base_package" 2>/dev/null; then
+                    if sudo -u "$TARGET_USER" python3 -m pip install --user --break-system-packages "$base_package" 2>/dev/null; then
                         echo -e "${GREEN}✓ $base_package (fallback)${NC}"
                         success=true
                     else
@@ -321,10 +327,10 @@ install_python_packages() {
     # Detect binary paths
     echo -e "${BLUE}Detecting Reticulum binaries...${NC}"
     
-    local search_paths=("/usr/local/bin" "/usr/bin" "$USER_HOME/.local/bin")
+    local search_paths=("$USER_HOME/.local/bin" "/usr/local/bin" "/usr/bin")
     
-    RNS_BIN=$(which rnsd 2>/dev/null || find "${search_paths[@]}" -name "rnsd" -type f 2>/dev/null | head -1 || echo "/usr/local/bin/rnsd")
-    NOMADNET_BIN=$(which nomadnet 2>/dev/null || find "${search_paths[@]}" -name "nomadnet" -type f 2>/dev/null | head -1 || echo "/usr/local/bin/nomadnet")
+    RNS_BIN=$(sudo -u "$TARGET_USER" which rnsd 2>/dev/null || find "${search_paths[@]}" -name "rnsd" -type f 2>/dev/null | head -1 || echo "$USER_HOME/.local/bin/rnsd")
+    NOMADNET_BIN=$(sudo -u "$TARGET_USER" which nomadnet 2>/dev/null || find "${search_paths[@]}" -name "nomadnet" -type f 2>/dev/null | head -1 || echo "$USER_HOME/.local/bin/nomadnet")
     
     echo -e "${GREEN}RNS: $RNS_BIN${NC}"
     echo -e "${GREEN}Nomadnet: $NOMADNET_BIN${NC}"
@@ -505,6 +511,9 @@ EOF
 
     udevadm control --reload-rules 2>/dev/null || true
     udevadm trigger 2>/dev/null || true
+
+    # Add user to dialout group for serial device access
+    usermod -a -G dialout "$TARGET_USER" 2>/dev/null || true
     
     echo -e "${GREEN}Udev rules created${NC}"
 }
@@ -542,6 +551,7 @@ Restart=always
 RestartSec=5
 StandardOutput=journal
 StandardError=journal
+Environment="PATH=$USER_HOME/.local/bin:/usr/local/bin:/usr/bin:/bin"
 
 [Install]
 WantedBy=multi-user.target
@@ -563,6 +573,7 @@ Restart=always
 RestartSec=10
 StandardOutput=journal
 StandardError=journal
+Environment="PATH=$USER_HOME/.local/bin:/usr/local/bin:/usr/bin:/bin"
 
 [Install]
 WantedBy=multi-user.target
