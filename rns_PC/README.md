@@ -30,13 +30,13 @@
 - Run with sudo
 - Internet access for apt, git, and npm installs
 - For Kairos mode: WireGuard credentials provided by 3n19ma
-
 # Files in this Folder
 - deploy_rns.sh: main installer
 - key_baker.sh: generates a version of the installer with your WireGuard keys included
 
+
 # How to Run the Installer
-## Local Mesh Only (no VPN)
+#### Local Mesh Only (no VPN)
 - git clone https://github.com/jackcox15/Kairos
 - cd Kairos/rns_PC
 - chmod +x deploy_rns.sh
@@ -44,7 +44,7 @@
 #### When prompted, choose **no** for KAIROS credentials.
 
 # Kairos Mode: Bake Your Keys Into the Script
-### To create an installer with your VPN keys:
+#### To create an installer with your VPN keys:
 - chmod +x key_baker.sh deploy_rns.sh
 -./key_baker.sh
 #### You will be asked for:
@@ -58,6 +58,8 @@
 ##### The script creates:
 - configured_scripts/deploy_rns_<CLIENT>.sh
 #### This file is ready to run on the client machine.
+
+
 # Kairos Network Mode (with VPN)
 #### First bake your keys:
 - ./key_baker.sh
