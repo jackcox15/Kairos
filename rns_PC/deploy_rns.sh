@@ -206,7 +206,7 @@ ask_kairos_access() {
     if [[ "$KAIROS_ACCESS" =~ ^[Yy]$ ]]; then
         echo -e "${GREEN}KAIROS mode enabled${NC}"
     else
-        echo -e "${CYAN}Local mesh only - no KAIROS connection${NC}"
+        echo -e "${CYAN}Local mesh only, no KAIROS connection${NC}"
     fi
 }
 
@@ -300,7 +300,7 @@ install_python_packages() {
         while [ $retry -lt 3 ] && [ "$success" = false ]; do
             if sudo -u "$TARGET_USER" python3 -m pip install --user --break-system-packages --upgrade "$package" 2>/dev/null; then
                 success=true
-                echo -e "${GREEN}✓ $package${NC}"
+                echo -e "${GREEN} $package${NC}"
             else
                 retry=$((retry + 1))
                 if [ $retry -lt 3 ]; then
@@ -311,10 +311,10 @@ install_python_packages() {
                     local base_package=$(echo "$package" | cut -d'>' -f1 | cut -d'<' -f1 | cut -d'=' -f1)
                     
                     if sudo -u "$TARGET_USER" python3 -m pip install --user --break-system-packages "$base_package" 2>/dev/null; then
-                        echo -e "${GREEN}✓ $base_package (fallback)${NC}"
+                        echo -e "${GREEN} $base_package (fallback)${NC}"
                         success=true
                     else
-                        echo -e "${RED}✗ Failed to install $package${NC}"
+                        echo -e "${RED} Failed to install $package${NC}"
                         exit 1
                     fi
                 fi
