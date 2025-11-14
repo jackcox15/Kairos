@@ -86,6 +86,6 @@
 - sudo journalctl -u meshchat -f
 #### To detect a plugged-in RNode:
 detect-rnodes.sh
-**Expected output**: Your device should appear (e.g., `/dev/ttyUSB0` or `/dev/ttyACM0`)
+**Expected output**: Your device should appear ( `/dev/ttyUSB0` or `/dev/ttyACM0`)
 
 ...
