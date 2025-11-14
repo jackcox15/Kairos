@@ -47,6 +47,7 @@
 #### To create an installer with your VPN keys:
 - chmod +x key_baker.sh deploy_rns.sh
 -./key_baker.sh
+
 #### You will be asked for:
 - Client name
 - WireGuard private key
@@ -55,7 +56,7 @@
 - Server public key
 - Endpoint
 - Internal VPS IP
-##### The script creates:
+#### The script creates:
 - configured_scripts/deploy_rns_<CLIENT>.sh
 #### This file is ready to run on the client machine.
 
@@ -69,7 +70,7 @@
 - ssh user@client
 - cd /tmp
 - sudo ./deploy_rns_CLIENT.sh
-#### Choose yes when asked if you have KAIROS credentials.
+##### Choose yes when asked if you have KAIROS credentials.
 
 # After Installation
 #### You should now have:
