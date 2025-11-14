@@ -56,8 +56,7 @@
 - Server public key
 - Endpoint
 - Internal VPS IP
-#### The script creates:
- configured_scripts/deploy_rns_<CLIENT>.sh
+#### The script creates: your/directory/deploy_rns_<YOURCLIENT>.sh
 #### This file is ready to run on the client machine.
 
 
