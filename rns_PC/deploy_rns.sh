@@ -764,10 +764,6 @@ install_system_packages "${FINAL_PACKAGES[@]}"
 echo -e "${PURPLE}[4/15] Checking pip...${NC}"
 bootstrap_pip
 
-# Setup WireGuard (if KAIROS enabled)
-echo -e "${PURPLE}[5/15] Network setup...${NC}"
-setup_wireguard
-
 # Install Python packages
 echo -e "${PURPLE}[6/15] Installing Python packages...${NC}"
 install_python_packages "${PYTHON_PACKAGES[@]}"
@@ -785,8 +781,12 @@ echo -e "${PURPLE}[9/15] Creating utility scripts...${NC}"
 create_rnode_detector
 create_serial_udev_rules
 
+# Setup WireGuard (if KAIROS enabled)
+echo -e "${PURPLE}[10/15] Network setup...${NC}"
+setup_wireguard
+
 # Create systemd services
-echo -e "${PURPLE}[10/15] Creating services...${NC}"
+echo -e "${PURPLE}[10.5/15] Creating services...${NC}"
 create_systemd_services
 
 # Create desktop shortcuts
