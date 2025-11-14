@@ -65,6 +65,12 @@ Kairos represents a different approach to technology infrastructure:
 #### Instead: **Community owned infrastructure built through mutual aid principles.**
 #### Target Audience: Trusted network of vetted individuals distributed through small cells of aligned individuals. This is intentionally not mass-market, it's infrastructure for communities who need it.
 
+# Alternative Transports
+While the main Kairos Network uses WireGuard for sovereignty reasons, 
+the Reticulum mesh layer works over any IP transport. You could adapt 
+these scripts to use Tailscale, ZeroTier, I2P, yggsdrasil, or even direct internet 
+connections if that fits your community's needs better.
+
 # Community & Contribution
 #### Getting Involved
 Kairos operates through trust networks rather than public channels. We carefully vet new participants:
