@@ -18,7 +18,7 @@ VPS_PORT=8000
 REPO=https://github.com/liamcottle/reticulum-meshchat
 INSTALL_DIR="/opt/reticulum-meshchat"
 
-# Get user who ran sudo, avoids everything install in root
+# Get user who ran sudo, avoids installing everything  in root
 if [ -n "$SUDO_USER" ]; then
     TARGET_USER="$SUDO_USER"
     USER_HOME=$(eval echo ~"$SUDO_USER")
@@ -27,7 +27,7 @@ else
     USER_HOME="$HOME"
 fi
 
-# WireGuard config (replaced by key_baker.sh if using KAIROSnet)
+# WireGuard config (replaced by key_baker.sh if using KAIROS net)
 WG_PRIVATE_KEY="__REPLACE_PRIVATE_KEY__"
 WG_PUBLIC_KEY="__REPLACE_PUBLIC_KEY__"
 WG_CLIENT_IP="__REPLACE_CLIENT_IP__"
