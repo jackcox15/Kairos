@@ -37,16 +37,16 @@
 
 # How to Run the Installer
 #### Local Mesh Only (no VPN)
-- git clone https://github.com/jackcox15/Kairos
-- cd Kairos/rns_PC
-- chmod +x deploy_rns.sh
-- sudo ./deploy_rns.sh
+`git clone https://github.com/jackcox15/Kairos`
+`cd Kairos/rns_PC`
+`chmod +x deploy_rns.sh`
+`sudo ./deploy_rns.sh`
 #### When prompted, choose **no** for KAIROS credentials.
 
 # Kairos Mode: Bake Your Keys Into the Script
 #### To create an installer with your VPN keys:
-- chmod +x key_baker.sh deploy_rns.sh
--./key_baker.sh
+`chmod +x key_baker.sh deploy_rns.sh`
+`./key_baker.sh`
 
 #### You will be asked for:
 - Client name
@@ -57,19 +57,19 @@
 - Endpoint
 - Internal VPS IP
 #### The script creates:
-- configured_scripts/deploy_rns_<CLIENT>.sh
+ configured_scripts/deploy_rns_<CLIENT>.sh
 #### This file is ready to run on the client machine.
 
 
 # Kairos Network Mode (with VPN)
 #### First bake your keys:
-- ./key_baker.sh
+`./key_baker.sh`
 - Copy the generated script to the client system:
-- scp configured_scripts/deploy_rns_CLIENT.sh user@client:/your/directory
+`scp /from/your/directory/deploy_rns_<CLIENT>.sh user@client:/to/your/directory`
 #### Run it on the client:
-- ssh user@client
-- cd /tmp
-- sudo ./deploy_rns_CLIENT.sh
+`ssh yourusername@yourclient`
+`cd /tmp`
+`sudo ./deploy_rns_CLIENT.sh`
 ##### Choose yes when asked if you have KAIROS credentials.
 
 # After Installation
@@ -79,13 +79,13 @@
 - Reticulum config at ~/.reticulum/config
 - RNode detection script at /usr/local/bin/detect-rnodes.sh
 #### Useful commands:
-- sudo systemctl status reticulum meshchat
-- sudo systemctl restart reticulum
-- sudo systemctl restart meshchat
-- sudo journalctl -u reticulum -f
-- sudo journalctl -u meshchat -f
+`sudo systemctl status reticulum meshchat`
+`sudo systemctl restart reticulum`
+`sudo systemctl restart meshchat`
+`sudo journalctl -u reticulum -f`
+`sudo journalctl -u meshchat -f`
 #### To detect a plugged-in RNode:
-detect-rnodes.sh
+`detect-rnodes.sh`
 **Expected output**: Your device should appear ( `/dev/ttyUSB0` or `/dev/ttyACM0`)
 
 ...
