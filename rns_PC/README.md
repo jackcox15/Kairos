@@ -89,4 +89,32 @@ during the installer!**
 `detect-rnodes.sh`
 **Expected output**: Your device should appear ( `/dev/ttyUSB0` or `/dev/ttyACM0`)
 
-...
+## TUI Management tool "kairosctl"
+
+After installation, use `kairosctl` for easy system management!
+
+### Quick Start
+
+Simply run:
+```bash
+kairosctl
+```
+
+This launches an interactive menu where you can:
+
+- **View System Status**
+- **Manage Services** 
+- **View Network Activity** 
+- **View Messages** 
+- **Open Chat Interface** 
+- **VPN Status**
+- **System Health Check**
+- **Quick Fixes** 
+- **Troubleshooting Guide** 
+
+For quick status checks:
+```bash
+kairosctl status
+```
+
+But for most users, **just use kairosctl**
