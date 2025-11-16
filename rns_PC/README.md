@@ -3,7 +3,8 @@
 **The goal of Kairos is to make decentralized communication easy to deploy, prepackaged, and accessible to anyone.**
 **This allows you to quickly seed local communities, run resilient communication hubs, and expand your mesh network with minimal effort.**
 
-**Joining the Kairos network is optional! You can run a standalone local mesh, or connect to the Kairos VPS hub if you have credentials.**
+**Joining the Kairos network is optional! You can run a standalone local mesh, or connect to the Kairos VPS hub if you have credentials. If you do not wish to join the private Kairos network, you can simply select "No"
+during the installer!**
 
 ### It supports two modes:
 - Local mesh only (If desire is for seeding your own local community)
