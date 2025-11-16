@@ -1,8 +1,9 @@
 # What is Kairos?
 Kairos is a reproducible deployment system for Reticulum based mesh networks. Its purpose is to make resilient, censorship resistant communication practical and accessible for mutual aid groups, community organizers, independent press, and privacy focused individuals.
-Kairos provides the toolkits, configuration, and workflows needed to deploy and maintain mesh communication nodes on laptops, Raspberry Pis, or LoRa devices with minimal setup and no centralized authority. It turns complex networking into a "plug-and-operate" system, enabling communities to build and maintain their own communication infrastructure even in degraded, surveilled, or disconnected environments.
+Kairos provides the toolkits, configuration, and workflows needed to deploy and maintain mesh communication nodes on laptops, Raspberry Pis, or LoRa devices with minimal setup and no centralized authority. It turns complex networking into a "plug-and-operate" system, enabling communities to build and maintain their own communication infrastructure even in degraded, surveilled, or disconnected environments. These tools give users the power to quickly spin up their own local Reticulum mesh 
+networks and seed resiliant community infrastructure.
 
-Kairos combines internet-based infrastructure (utilizing securely owned virtual private servers + WireGuard) with local LoRa radio networks to create communications that work with or without internet connectivity.
+Kairos combines internet based infrastructure (utilizing securely owned virtual private servers + WireGuard) with local LoRa radio networks to create communications that work with or without internet connectivity.
 The system is designed for graceful degradation: as infrastructure fails, the network automatically falls back from:
 #### GLOBAL → REGIONAL → LOCAL ONLY
 
@@ -16,7 +17,7 @@ Kairos strives to simplify the setup of LoRa radios, Reticulum deployments, and 
 - Operational Security – Built in OPSEC practices for adversarial environments
 
 Three Layers:
-1. VPS Backbone - Redundant servers for global connectivity
+1. VPS Backbone - Redundant servers for global connectivity through the Kairos VPN network
 2. Home Nodes - Your computer + RNode bridging internet and RF mesh
 3. LoRa Network - Local radio mesh (1-20+ mile range, works without internet)
    
