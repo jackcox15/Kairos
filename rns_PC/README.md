@@ -116,5 +116,3 @@ For quick status checks:
 ```bash
 kairosctl status
 ```
-
-But for most users, **just use kairosctl**
