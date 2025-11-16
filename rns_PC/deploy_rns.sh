@@ -680,6 +680,21 @@ EOF
     echo -e "${GREEN}Desktop shortcuts created${NC}"
 }
 
+install_kairosctl() {
+    echo -e "${BLUE}Installing management tool...${NC}"
+    
+    curl -fsSL https://raw.githubusercontent.com/jackcox15/Kairos/main/rns_PC/kairosctl.sh -o /usr/local/bin/kairosctl || {
+        echo -e "${RED}Failed to download kairosctl${NC}"
+        return 1
+    }
+    
+    chmod +x /usr/local/bin/kairosctl
+    
+    echo -e "${GREEN}kairosctl installed${NC}"
+    echo -e "${BLUE}  Run 'kairosctl' to manage your mesh node${NC}"
+}
+
+
 print_completion() {
     echo ""
     echo -e "${GREEN}════════════════════════════════════════${NC}"
@@ -689,35 +704,38 @@ print_completion() {
     
     if [[ "$KAIROS_ACCESS" =~ ^[Yy]$ ]]; then
         echo -e "${CYAN}Mode: KAIROS Network${NC}"
-        echo -e "${BLUE}  • Connected to global mesh via VPN${NC}"
-        echo -e "${BLUE}  • Local mesh discovery enabled${NC}"
+        echo -e "${BLUE}   Connected to global mesh via VPN${NC}"
+        echo -e "${BLUE}   Local mesh discovery enabled${NC}"
     else
         echo -e "${CYAN}Mode: Local Mesh Only${NC}"
-        echo -e "${BLUE}  • Local mesh discovery enabled${NC}"
-        echo -e "${BLUE}  • To join KAIROS later, get credentials and re-run${NC}"
+        echo -e "${BLUE}   Local mesh discovery enabled${NC}"
+        echo -e "${BLUE}   To join KAIROS later, get credentials and re-run${NC}"
     fi
     
     echo ""
     echo -e "${PURPLE}Access:${NC}"
-    echo -e "${BLUE}  • MeshChat: http://localhost:8000${NC}"
-    echo -e "${BLUE}  • Nomadnet: nomadnet${NC}"
-    echo -e "${BLUE}  • Status: rnstatus${NC}"
+    echo -e "${BLUE}  MeshChat: http://localhost:8000${NC}"
+    echo -e "${BLUE}  Nomadnet: nomadnet${NC}"
+    echo -e "${BLUE}  Status: rnstatus${NC}"
     
     echo ""
     echo -e "${PURPLE}Service Management:${NC}"
-    echo -e "${BLUE}  • Status: sudo systemctl status reticulum meshchat${NC}"
-    echo -e "${BLUE}  • Logs: sudo journalctl -u reticulum -f${NC}"
-    echo -e "${BLUE}  • Restart: sudo systemctl restart reticulum${NC}"
+    echo -e "${BLUE}  Status: sudo systemctl status reticulum meshchat${NC}"
+    echo -e "${BLUE}  Logs: sudo journalctl -u reticulum -f${NC}"
+    echo -e "${BLUE}  Restart: sudo systemctl restart reticulum${NC}"
     
     echo ""
     echo -e "${PURPLE}Config:${NC}"
-    echo -e "${BLUE}  • Reticulum: ~/.reticulum/config${NC}"
-    echo -e "${BLUE}  • RNode detection: /usr/local/bin/detect-rnodes.sh${NC}"
+    echo -e "${BLUE}  Reticulum: ~/.reticulum/config${NC}"
+    echo -e "${BLUE}  RNode detection: /usr/local/bin/detect-rnodes.sh${NC}"
+    echo -e "${BLUE} Run: 'kairosctl' in the console to manage Reticulum!${NC}"
+    
     
     echo ""
-    echo -e "${GREEN}Happy meshing!${NC}"
+    echo -e "${GREEN}Happy meshing! <3 ${NC}"
     echo ""
 }
+
 
 #############################
 ### Main Script
