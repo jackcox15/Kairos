@@ -252,6 +252,7 @@ setup_wireguard() {
 [Interface]
 PrivateKey = $WG_PRIVATE_KEY
 Address = $WG_CLIENT_IP/24
+Table = off
 DNS = 1.1.1.1, 8.8.8.8
 
 [Peer]
@@ -799,12 +800,9 @@ echo -e "${PURPLE}[9/15] Creating utility scripts...${NC}"
 create_rnode_detector
 create_serial_udev_rules
 
-# Setup WireGuard (if KAIROS enabled)
-echo -e "${PURPLE}[10/15] Network setup...${NC}"
-setup_wireguard
 
 # Create systemd services
-echo -e "${PURPLE}[10.5/15] Creating services...${NC}"
+echo -e "${PURPLE}[10/15] Creating services...${NC}"
 create_systemd_services
 
 # Create desktop shortcuts
@@ -814,6 +812,14 @@ create_desktop_shortcuts
 # Start services
 echo -e "${PURPLE}[12/15] Starting services...${NC}"
 start_services
+
+# Install kairosctl
+echo -e "${PURPLE}[12/15] Installing management tool...${NC}"
+install_kairosctl
+
+# Setup WireGuard (if KAIROS enabled)
+echo -e "${PURPLE}[12.5/15] Network setup...${NC}"
+setup_wireguard
 
 # Check status
 echo -e "${PURPLE}[13/15] Checking status...${NC}"
