@@ -13,7 +13,9 @@ during the installer!**
 - Reticulum running as a system service
 - MeshChat at http://localhost:8000
 - Nomadnet CLI
-- **Optional:** WireGuard tunnel if you would like to join the mesh
+- Kaiosctl Whiptail TUI for system management
+- Helper scripts for deploying hardware 
+- **Optional:** WireGuard tunnel if you would like to join the Kairos network
 
 # Features
 ### The script automatically:
@@ -32,7 +34,7 @@ during the installer!**
 - Run with sudo
 - Internet access for apt, git, and npm installs
 - For Kairos mode: WireGuard credentials provided by 3n19ma
-# Files in this Folder
+### Files in this Folder
 - deploy_rns.sh: main installer
 - key_baker.sh: generates a version of the installer with your WireGuard keys included
 
@@ -58,7 +60,7 @@ during the installer!**
 - Server public key
 - Endpoint
 - Internal VPS IP
-#### The script creates: your/directory/deploy_rns_<YOURCLIENT>.sh
+#### The script creates: your/directory/configured_scripts/deploy_rns_<YOURCLIENT>.sh
 #### This file is ready to run on the client machine.
 
 
@@ -67,10 +69,9 @@ during the installer!**
 - `./key_baker.sh`
 - Copy the generated script to the client system:
 - `scp /from/your/directory/deploy_rns_<CLIENT>.sh user@client:/to/your/directory`
-#### Run it on the client:
-- `ssh yourusername@yourclient`
-- `cd /tmp`
-- `sudo ./deploy_rns_CLIENT.sh`
+- Or run it directly on your machine if running locally!
+- `cd /your/directory/to/Kairos/configured_scripts`
+- `./deploy_rns<yourclientname>`
 ##### Choose yes when asked if you have KAIROS credentials.
 
 # After Installation
