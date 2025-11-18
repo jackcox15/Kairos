@@ -1291,11 +1291,9 @@ What would you like to do?" \
           clear
           echo ""
           echo "═══════════════════════════════════════"
-          echo "  Thank you for using Kairos Mesh!<3"
+          echo "  Thank you for using this tool!<3"
           echo "═══════════════════════════════════════"
           echo ""
-          echo "Your mesh network is still running."
-          echo "You can come back anytime."
           echo ""
           exit 0
         fi
