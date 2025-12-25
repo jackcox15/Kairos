@@ -101,8 +101,15 @@ Simply run:
 ```bash
 kairosctl
 ```
-##Example:
-![Kairosctl Menu](picture_examples/kairosctl_main.png)
+## Example
+
+<p align="center">
+  <img src="picture_examples/kairosctl_program.gif" alt="Kairos Control Panel Demo" width="800">
+</p>
+
+<p align="center">
+  <em>Interactive terminal interface for managing your mesh network</em>
+</p>
 
 This launches an interactive menu where you can:
 
