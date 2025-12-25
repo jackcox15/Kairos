@@ -102,16 +102,12 @@ Simply run:
 kairosctl
 ```
 ## Example
-
 <p align="center">
-  <img src="./picture_examples/kairosctl_program.gif" alt="Kairos Control Panel Demo" width="800">
+  <img src="https://raw.githubusercontent.com/YOUR_USERNAME/Kairos/main/rns_PC/picture_examples/kairosctl_program.gif" alt="Kairos Control Panel Demo" width="800">
 </p>
-
-
 <p align="center">
   <em>Interactive terminal interface for managing your mesh network</em>
 </p>
-
 This launches an interactive menu where you can:
 
 - **View System Status**
