@@ -23,10 +23,10 @@ WHIPTAIL_MENU_HEIGHT=14
 
 # Universal MeshChat search paths
 MESHCHAT_DIRS=(
-  "/opt/reticulum-meshchat/storage/identities/*/database.py"
-  "$HOME_DIR/reticulum-meshchat/storage/identities/*/database.py"
+  "/opt/reticulum-meshchat/storage/"
   "$HOME_DIR/reticulum-meshchat/storage"
-  "$HOME_DIR/.local/share/reticulum-meshchat/storage"
+  "$HOME_DIR/.config/reticulum-meshchat/"
+  "$HOME_DIR/.local/share/reticulum-meshchat/storag"
 )
 
 # Service name detection
@@ -202,43 +202,57 @@ restart_any(){
 
 # ===== MeshChat DB Discovery =====
 find_meshchat_db(){
-  local identities_base=""
+  local newest="" newest_mt=0
   
+  # Search for database.db in identities subdirectories
   for root in "${MESHCHAT_DIRS[@]}"; do
+    if [[ ! -d "$root" ]]; then
+      continue
+    fi
+    
+    # Look for identities/*/database.db pattern
     if [[ -d "$root/identities" ]]; then
-      identities_base="$root/identities"
-      log "Found MeshChat identities at: $identities_base"
-      break
+      log "Searching for database in: $root/identities"
+      
+      # Use find to locate all database.db files under identities/
+      while IFS= read -r -d '' db; do
+        # Verify it's actually a SQLite database with the right tables
+        if cmd_exists sqlite3; then
+          local tables
+          tables="$(sqlite3 "$db" ".tables" 2>/dev/null || true)"
+          
+          # Check if it has the lxmf_messages table (confirms it's a MeshChat DB)
+          if [[ "$tables" == *"lxmf_messages"* ]]; then
+            # Get modification time to find the newest database
+            local mt
+            if stat -c %Y "$db" &>/dev/null; then
+              mt="$(stat -c %Y "$db" 2>/dev/null)"
+            elif stat -f %m "$db" &>/dev/null; then
+              mt="$(stat -f %m "$db" 2>/dev/null)"
+            else
+              mt=0
+            fi
+            
+            is_num "$mt" || mt=0
+            
+            if (( mt > newest_mt )); then 
+              newest="$db"
+              newest_mt="$mt"
+              log "Found valid database: $db (mtime: $mt)"
+            fi
+          fi
+        else
+          # If sqlite3 isn't available, just take the first database.db we find
+          if [[ -z "$newest" ]]; then
+            newest="$db"
+            log "Found database (no sqlite3 verification): $db"
+          fi
+        fi
+      done < <(find "$root/identities" -type f -name "database.db" -print0 2>/dev/null)
     fi
   done
   
-  local newest="" newest_mt=0
-  
-  if [[ -n "$identities_base" ]] && cmd_exists sqlite3; then
-    while IFS= read -r -d '' db; do
-      local tables
-      tables="$(sqlite3 "$db" ".tables" 2>/dev/null || true)"
-      [[ "$tables" == *"lxmf_messages"* ]] || continue
-      
-      local mt
-      if stat -c %Y "$db" &>/dev/null; then
-        mt="$(stat -c %Y "$db" 2>/dev/null)"
-      elif stat -f %m "$db" &>/dev/null; then
-        mt="$(stat -f %m "$db" 2>/dev/null)"
-      else
-        mt=0
-      fi
-      
-      is_num "$mt" || mt=0
-      
-      if (( mt > newest_mt )); then 
-        newest="$db"
-        newest_mt="$mt"
-        log "Found database: $db (mtime: $mt)"
-      fi
-    done < <(find "$identities_base" -type f -name "database.db" -print0 2>/dev/null)
-  fi
-  
+  # Fallback: check for legacy/direct database.db locations
   if [[ -z "$newest" ]]; then
     for legacy_path in \
       "/opt/reticulum-meshchat/storage/database.db" \
