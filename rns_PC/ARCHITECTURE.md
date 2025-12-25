@@ -4,7 +4,7 @@
 KAIROS also provides optional VPS infrastructure to bridge isolated local meshes.
 
 ## How the VPS Backbone Works
-- Redundant servers spread across Japan
+- Redundant, independent servers spread across Japan
 - WireGuard VPN for transport
 - Reticulum TCP interface over VPN
 - No logging, no data retention

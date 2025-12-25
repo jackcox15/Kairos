@@ -101,6 +101,8 @@ Simply run:
 ```bash
 kairosctl
 ```
+##Example:
+![Kairosctl Menu](picture_examples/kairosctl_main.png)
 
 This launches an interactive menu where you can:
 
