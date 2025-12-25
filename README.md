@@ -1,25 +1,27 @@
 # What is Kairos?
-Kairos is a reproducible deployment system for Reticulum based mesh networks. Its purpose is to make resilient, censorship resistant communication practical and accessible for mutual aid groups, community organizers, independent press, and privacy focused individuals.
-Kairos provides the toolkits, configuration, and workflows needed to deploy and maintain mesh communication nodes on laptops, Raspberry Pis, or LoRa devices with minimal setup and no centralized authority. It turns complex networking into a "plug-and-operate" system, enabling communities to build and maintain their own communication infrastructure even in degraded, surveilled, or disconnected environments. These tools give users the power to quickly spin up their own local Reticulum mesh 
-networks and seed resiliant community infrastructure.
+Kairos is a reproducible deployment system for Reticulum based mesh networks. Its purpose is to make resilient, censorship resistant communication practical and accessible for mutual aid groups, community organizers, independent press, and privacy focused individuals through automation and simple to use tools. 
 
-Kairos combines internet based infrastructure (utilizing securely owned virtual private servers + WireGuard) with local LoRa radio networks to create communications that work with or without internet connectivity.
+Kairos provides the toolkits, configuration, and workflows needed to deploy and maintain mesh communication nodes on laptops, Raspberry Pis, or LoRa devices with minimal setup and no centralized authority. It turns complex networking into a "plug-and-operate" system, enabling users to build and maintain their own communication infrastructure even in degraded, surveilled, or disconnected environments. These tools give users the power to quickly spin up their own local Reticulum mesh networks and seed resiliant community infrastructure.
+
+Kairos also combines internet based infrastructure (utilizing securely owned virtual private servers + via WireGuard) with local LoRa radio networks to create communications that work with or without internet connectivity.
 The system is designed for graceful degradation: as infrastructure fails, the network automatically falls back from:
 #### GLOBAL → REGIONAL → LOCAL ONLY
 
 ## What Problem Does This Solve?
 Reticulum is a powerful cryptographic network protocol, but deploying it at scale for non-tech savvy people can be difficult. 
-Kairos strives to simplify the setup of LoRa radios, Reticulum deployments, and organically build local resilient communication networks with minimum effort
-- Automated Deployment - Live USB systems that come preconfigured with helper tools
-- Hardware Integration – Plug and play RNode devices with automated firmware flashing, and PHY settings, and reticulum config updates
-- User Interface - MeshChat web UI instead of command line only, RaspberryPi Python programs, and custom management programs
-- Infrastructure Setup - VPS backbone with WireGuard VPN for global connectivity **if you join KairosNet**
-- Operational Security – Built in OPSEC practices for adversarial environments
+Kairos strives to simplify the setup of LoRa radios, Reticulum deployments, and organically build local resilient communication networks with minimum effort.
+
+- Automated Deployments: using Kairos deploy scripts
+- Hardware Integrations: Plug and play RNode devices with guided firmware flashing of custom PHY settings
+- User Interfaces: MeshChat web UI instead of command line only, RaspberryPi Python programs, and custom management programs
+- Infrastructure Setup: VPS backbone with WireGuard VPN for global connectivity **if you join KairosNet**
+- Operational Security: Built in OPSEC practices for adversarial environments
 
 Three Layers:
 1. VPS Backbone - Redundant servers for global connectivity through the Kairos VPN network
-2. Home Nodes - Your computer + RNode bridging internet and RF mesh
-3. LoRa Network - Local radio mesh (1-20+ mile range, works without internet)
+      -KairosNet offers offline wikipedia pages, books, classic old internet forum pages. 
+3. Home Nodes - Your computer + RNode bridging internet and RF mesh
+4. LoRa Network - Local radio mesh (1-20+ mile range, works without internet)
    
 Graceful Degradation:
 - Internet works → Global mesh via VPS + local LoRa
@@ -33,9 +35,9 @@ Graceful Degradation:
 - USB cable to connect them, ensure data cables, not just charge.
 
 ## Deployment Options
-Option 1: Live USB (Recommended for technical users)
-- Bootable Ubuntu system with automated setup and preconfigured tools 
-- Works on any x86 computer without permanent installation 
+Option 1: Deploy Scripts (Recommended for technical users)
+- Run shell script for automated setup and preconfigured tools 
+- Works on any x86 Debian, Ubuntu, Pi or Arch computer
 - Scripts to automate LoRa Config, and easily manage the system
 
 Option 2: RNode Box (Raspberry Pi relay/repeater)
@@ -44,7 +46,7 @@ Option 2: RNode Box (Raspberry Pi relay/repeater)
 - LoRa device connected to USB hub, or via MicroUSB cable 
       
 Option 3: RNode Gateway
-- Raspberry Pi with WiFi AP and web interface 
+- Raspberry Pi 4b or 5 with WiFi AP and web interface 
 - Plug and play for non-technical users 
 - 3.5" LCD with real-time status monitoring 
  
@@ -64,7 +66,7 @@ Kairos represents a different approach to technology infrastructure:
 - Not a Service: No company, no terms of service, no data collection
 - Not a Startup: No investors, no exit strategy, no growth metrics
 #### Instead: **Community owned infrastructure built through mutual aid principles.**
-#### Target Audience: Trusted network of vetted individuals distributed through small cells of aligned individuals. This is intentionally not mass-market, it's infrastructure for communities who need it.
+#### Target Audience: Trusted networks of like minded people. This is intentionally not mass-market, it's infrastructure for communities who need it or those who want to build it.
 
 # Alternative Transports
 While the main Kairos Network uses WireGuard for sovereignty reasons, 
