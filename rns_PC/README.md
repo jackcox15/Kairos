@@ -103,7 +103,7 @@ kairosctl
 ```
 ## Example
 <p align="center">
-  <img src="https://raw.githubusercontent.com/YOUR_USERNAME/Kairos/main/rns_PC/picture_examples/kairosctl_program.gif" alt="Kairos Control Panel Demo" width="800">
+  <img src="../picture_examples/kairosctl_program.gif" alt="Kairos Control Panel Demo" width="800">
 </p>
 <p align="center">
   <em>Interactive terminal interface for managing your mesh network</em>
