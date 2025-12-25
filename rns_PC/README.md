@@ -104,7 +104,7 @@ kairosctl
 ## Example
 
 <p align="center">
-  <img src="..picture_examples/kairosctl_program.gif" alt="Kairos Control Panel Demo" width="800">
+  <img src="./picture_examples/kairosctl_program.gif" alt="Kairos Control Panel Demo" width="800">
 </p>
 
 
