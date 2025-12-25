@@ -30,8 +30,7 @@ else
     USER_HOME="$HOME"
 fi
 
-# WireGuard config (replaced by key_baker.sh if using KAIROS net, 
-# reach out to enigma)
+# WireGuard config (replaced by key_baker.sh if using KAIROS net)
 WG_PRIVATE_KEY="__REPLACE_PRIVATE_KEY__"
 WG_PUBLIC_KEY="__REPLACE_PUBLIC_KEY__"
 WG_CLIENT_IP="__REPLACE_CLIENT_IP__"
@@ -60,7 +59,7 @@ DEBIAN_PACKAGES=(
     "libssl-dev" 
 )
 
-# Arch Linux packages - updated 
+# Arch Linux packages
 ARCH_PACKAGES=(
     "python"
     "python-pip"
@@ -308,7 +307,23 @@ setup_wireguard() {
     
     mkdir -p /etc/wireguard
     
-    cat > /etc/wireguard/wg0.conf << EOF
+    # Different config based on OS - Arch doesn't play nice with DNS in WireGuard
+    if [ "$OS_TYPE" = "arch" ]; then
+        cat > /etc/wireguard/wg0.conf << EOF
+[Interface]
+PrivateKey = $WG_PRIVATE_KEY
+Address = $WG_CLIENT_IP/24
+Table = off
+
+[Peer]
+PublicKey = $WG_SERVER_PUBLIC_KEY
+Endpoint = $WG_ENDPOINT
+AllowedIPs = 10.5.5.0/24
+PersistentKeepalive = 25
+EOF
+    else
+        # Debian can handle DNS in WireGuard config
+        cat > /etc/wireguard/wg0.conf << EOF
 [Interface]
 PrivateKey = $WG_PRIVATE_KEY
 Address = $WG_CLIENT_IP/24
@@ -321,6 +336,7 @@ Endpoint = $WG_ENDPOINT
 AllowedIPs = 10.5.5.0/24
 PersistentKeepalive = 25
 EOF
+    fi
 
     chmod 600 /etc/wireguard/wg0.conf
     
@@ -332,7 +348,16 @@ EOF
     
     systemctl start wg-quick@wg0 || {
         echo -e "${RED}Failed to start WireGuard${NC}"
-        exit 1
+        echo -e "${YELLOW}This might be a DNS conflict - checking...${NC}"
+        
+        # Show helpful error message
+        systemctl status wg-quick@wg0 --no-pager -l
+        
+        # Don't exit - let user decide
+        echo -e "${YELLOW}WireGuard failed to start, but continuing installation...${NC}"
+        echo -e "${YELLOW}You may need to fix DNS issues manually${NC}"
+        echo -e "${CYAN}Try: sudo resolvconf -u${NC}"
+        return 1
     }
     
     # Test connection
@@ -357,15 +382,12 @@ install_python_packages() {
         local success=false
         
         if [ "$OS_TYPE" = "arch" ]; then
-            # Arch: Try system-wide first with --break-system-packages
             if python -m pip install --break-system-packages --upgrade "$package" &>/dev/null; then
                 success=true
-            # If that fails, try as the target user
             elif sudo -u "$TARGET_USER" env HOME="$USER_HOME" python -m pip install --user --upgrade "$package" &>/dev/null; then
                 success=true
             fi
         else
-            # Debian: Install as user with break-system-packages
             if sudo -u "$TARGET_USER" python3 -m pip install --user --break-system-packages --upgrade "$package" &>/dev/null; then
                 success=true
             fi
@@ -374,7 +396,6 @@ install_python_packages() {
         if [ "$success" = true ]; then
             echo -e "${GREEN}✓ $package${NC}"
         else
-            # Try base package name
             local base_package=$(echo "$package" | cut -d'>' -f1 | cut -d'<' -f1 | cut -d'=' -f1)
             echo -e "${YELLOW}Retrying with base package: $base_package${NC}"
             
@@ -394,26 +415,100 @@ install_python_packages() {
                 echo -e "${GREEN}✓ $base_package${NC}"
             else
                 echo -e "${YELLOW}⚠ $package (may already be installed)${NC}"
-                # Don't exit - continue with installation
             fi
         fi
     done
     
     echo -e "${GREEN}Python packages installation complete${NC}"
     
+    # Create executable wrappers for Arch (pip doesn't install scripts with --break-system-packages)
+    if [ "$OS_TYPE" = "arch" ]; then
+        echo -e "${BLUE}Creating RNS executable wrappers...${NC}"
+        
+        # rnsd
+        cat > /usr/local/bin/rnsd << 'EOF'
+#!/usr/bin/env python
+import sys
+from RNS.Utilities import rnsd
+if __name__ == '__main__':
+    sys.exit(rnsd.main())
+EOF
+        chmod +x /usr/local/bin/rnsd
+        
+        # rnstatus  
+        cat > /usr/local/bin/rnstatus << 'EOF'
+#!/usr/bin/env python
+import sys
+from RNS.Utilities import rnstatus
+if __name__ == '__main__':
+    sys.exit(rnstatus.main())
+EOF
+        chmod +x /usr/local/bin/rnstatus
+        
+        # rnpath
+        cat > /usr/local/bin/rnpath << 'EOF'
+#!/usr/bin/env python
+import sys
+from RNS.Utilities import rnpath
+if __name__ == '__main__':
+    sys.exit(rnpath.main())
+EOF
+        chmod +x /usr/local/bin/rnpath
+        
+        # rnprobe
+        cat > /usr/local/bin/rnprobe << 'EOF'
+#!/usr/bin/env python
+import sys
+from RNS.Utilities import rnprobe
+if __name__ == '__main__':
+    sys.exit(rnprobe.main())
+EOF
+        chmod +x /usr/local/bin/rnprobe
+        
+        # rncp
+        cat > /usr/local/bin/rncp << 'EOF'
+#!/usr/bin/env python
+import sys
+from RNS.Utilities import rncp
+if __name__ == '__main__':
+    sys.exit(rncp.main())
+EOF
+        chmod +x /usr/local/bin/rncp
+        
+        # rnodeconf
+        cat > /usr/local/bin/rnodeconf << 'EOF'
+#!/usr/bin/env python
+import sys
+from RNS.Utilities import rnodeconf
+if __name__ == '__main__':
+    sys.exit(rnodeconf.main())
+EOF
+        chmod +x /usr/local/bin/rnodeconf
+        
+        # nomadnet
+        cat > /usr/local/bin/nomadnet << 'EOF'
+#!/usr/bin/env python
+import sys
+from nomadnet.nomadnet import main
+if __name__ == '__main__':
+    sys.exit(main())
+EOF
+        chmod +x /usr/local/bin/nomadnet
+        
+        echo -e "${GREEN}RNS wrappers created in /usr/local/bin${NC}"
+    fi
+    
     # Detect binary paths
     echo -e "${BLUE}Detecting Reticulum binaries...${NC}"
     
-    # Search in common locations
-    RNS_BIN=$(which rnsd 2>/dev/null || \
-              sudo -u "$TARGET_USER" which rnsd 2>/dev/null || \
-              find "$USER_HOME/.local/bin" /usr/local/bin /usr/bin -name "rnsd" -type f 2>/dev/null | head -1 || \
-              echo "/usr/bin/rnsd")
+    RNS_BIN=$(which rnsd 2>/dev/null || echo "/usr/local/bin/rnsd")
+    NOMADNET_BIN=$(which nomadnet 2>/dev/null || echo "/usr/local/bin/nomadnet")
     
-    NOMADNET_BIN=$(which nomadnet 2>/dev/null || \
-                   sudo -u "$TARGET_USER" which nomadnet 2>/dev/null || \
-                   find "$USER_HOME/.local/bin" /usr/local/bin /usr/bin -name "nomadnet" -type f 2>/dev/null | head -1 || \
-                   echo "/usr/bin/nomadnet")
+    # Verify binaries exist
+    if [ ! -f "$RNS_BIN" ]; then
+        echo -e "${RED}ERROR: rnsd binary not found at $RNS_BIN${NC}"
+        exit 1
+    fi
     
     echo -e "${GREEN}RNS: $RNS_BIN${NC}"
     echo -e "${GREEN}Nomadnet: $NOMADNET_BIN${NC}"
@@ -623,7 +718,7 @@ wait_for_service() {
 create_systemd_services() {
     echo -e "${BLUE}Creating systemd services...${NC}"
     
-    # Reticulum service
+    # Reticulum service - no --config flag needed (rnsd uses ~/.reticulum/config by default)
     cat > /etc/systemd/system/reticulum.service << EOF
 [Unit]
 Description=Reticulum Network Stack
@@ -634,7 +729,7 @@ Wants=network.target
 Type=simple
 User=$TARGET_USER
 WorkingDirectory=$USER_HOME
-ExecStart=$RNS_BIN --config $USER_HOME/.reticulum
+ExecStart=$RNS_BIN
 Restart=always
 RestartSec=5
 StandardOutput=journal
@@ -924,3 +1019,5 @@ check_service_status
 
 # Print completion info
 print_completion
+
+exit 0
