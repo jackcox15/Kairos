@@ -30,7 +30,8 @@ during the installer!**
 - Optionally creates desktop shortcuts if a desktop environment exists
 
 # Requirements
-- Debian or Ubuntu **only at the moment**
+- Debian or Ubuntu
+- Now supporting Arch Linux!!
 - Run with sudo
 - Internet access for apt, git, and npm installs
 - For Kairos mode: WireGuard credentials provided by 3n19ma
