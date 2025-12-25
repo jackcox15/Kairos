@@ -18,7 +18,10 @@ VPS_PORT=8000
 REPO=https://github.com/liamcottle/reticulum-meshchat
 INSTALL_DIR="/opt/reticulum-meshchat"
 
-# Get user who ran sudo, avoids installing everything  in root
+# OS detection variable
+OS_TYPE=""
+
+# Get user who ran sudo, avoids installing everything in root
 if [ -n "$SUDO_USER" ]; then
     TARGET_USER="$SUDO_USER"
     USER_HOME=$(eval echo ~"$SUDO_USER")
@@ -27,7 +30,8 @@ else
     USER_HOME="$HOME"
 fi
 
-# WireGuard config (replaced by key_baker.sh if using KAIROS net)
+# WireGuard config (replaced by key_baker.sh if using KAIROS net, 
+# reach out to enigma)
 WG_PRIVATE_KEY="__REPLACE_PRIVATE_KEY__"
 WG_PUBLIC_KEY="__REPLACE_PUBLIC_KEY__"
 WG_CLIENT_IP="__REPLACE_CLIENT_IP__"
@@ -56,19 +60,45 @@ DEBIAN_PACKAGES=(
     "libssl-dev" 
 )
 
+# Arch Linux packages - updated 
+ARCH_PACKAGES=(
+    "python"
+    "python-pip"
+    "python-setuptools"
+    "python-wheel"
+    "git"
+    "curl"
+    "nodejs"
+    "npm"
+    "wget"
+    "base-devel"
+    "libffi"
+    "openssl"
+)
+
 # Optional packages for KAIROS access
-KAIROS_PACKAGES=(
+DEBIAN_KAIROS_PACKAGES=(
     "wireguard"
     "resolvconf"
 )
 
+ARCH_KAIROS_PACKAGES=(
+    "wireguard-tools"
+    "openresolv"
+)
+
 # Optional packages for desktop shortcuts
-DESKTOP_PACKAGES=(
+DEBIAN_DESKTOP_PACKAGES=(
     "firefox"
     "gnome-terminal"
 )
 
-# Python packages
+ARCH_DESKTOP_PACKAGES=(
+    "firefox"
+    "gnome-terminal"
+)
+
+# Python packages (same for both)
 PYTHON_PACKAGES=(
     "rns"
     "nomadnet"
@@ -78,7 +108,6 @@ PYTHON_PACKAGES=(
     "websockets"
     "pyserial"
     "cx_freeze"
-
 )
 
 # Binary paths
@@ -87,14 +116,18 @@ NOMADNET_BIN=""
 PYTHON_BIN=""
 
 #############################
-#Functions
+# Functions
 #############################
 
 detect_os() {
-    if [ -f /etc/debian_version ]; then
+    if [ -f /etc/arch-release ]; then
+        echo -e "${BLUE}Detected: Arch Linux${NC}"
+        OS_TYPE="arch"
+    elif [ -f /etc/debian_version ]; then
         echo -e "${BLUE}Detected: Debian/Ubuntu${NC}"
+        OS_TYPE="debian"
     else
-        echo -e "${RED}Unsupported OS. This script only supports Debian/Ubuntu${NC}"
+        echo -e "${RED}Unsupported OS. This script supports Debian/Ubuntu and Arch Linux${NC}"
         exit 1
     fi
 }
@@ -102,8 +135,8 @@ detect_os() {
 detect_binary_paths() {
     echo -e "${BLUE}Detecting binary paths...${NC}"
     
-    PYTHON_BIN=$(which python3 2>/dev/null) || {
-        echo -e "${RED}Python3 not found in PATH${NC}"
+    PYTHON_BIN=$(which python3 2>/dev/null || which python 2>/dev/null) || {
+        echo -e "${RED}Python not found in PATH${NC}"
         exit 1
     }
     
@@ -112,7 +145,12 @@ detect_binary_paths() {
 
 check_package_installed() {
     local package="$1"
-    dpkg -l "$package" &>/dev/null
+    
+    if [ "$OS_TYPE" = "debian" ]; then
+        dpkg -l "$package" &>/dev/null
+    else
+        pacman -Qi "$package" &>/dev/null
+    fi
 }
 
 install_system_packages() {
@@ -123,7 +161,7 @@ install_system_packages() {
     
     for package in "${packages[@]}"; do
         if check_package_installed "$package"; then
-            echo -e "${GREEN} $package${NC}"
+            echo -e "${GREEN}✓ $package${NC}"
         else
             echo -e "${YELLOW}  $package (will install)${NC}"
             to_install+=("$package")
@@ -133,15 +171,29 @@ install_system_packages() {
     if [ ${#to_install[@]} -gt 0 ]; then
         echo -e "${PURPLE}Installing ${#to_install[@]} packages...${NC}"
         
-        apt-get update || {
-            echo -e "${RED}Failed to update package list${NC}"
-            exit 1
-        }
-        
-        apt-get install -y "${to_install[@]}" || {
-            echo -e "${RED}Failed to install system packages${NC}"
-            exit 1
-        }
+        if [ "$OS_TYPE" = "debian" ]; then
+            # Debian/Ubuntu installation
+            apt-get update || {
+                echo -e "${RED}Failed to update package list${NC}"
+                exit 1
+            }
+            
+            apt-get install -y "${to_install[@]}" || {
+                echo -e "${RED}Failed to install system packages${NC}"
+                exit 1
+            }
+        else
+            # Arch Linux installation
+            pacman -Sy --noconfirm || {
+                echo -e "${RED}Failed to update package database${NC}"
+                exit 1
+            }
+            
+            pacman -S --noconfirm "${to_install[@]}" || {
+                echo -e "${RED}Failed to install system packages${NC}"
+                exit 1
+            }
+        fi
         
         echo -e "${GREEN}System packages installed${NC}"
     else
@@ -153,36 +205,44 @@ bootstrap_pip() {
     echo -e "${BLUE}Checking pip...${NC}"
     
     # Check if pip works
-    if python3 -m pip --version &>/dev/null; then
+    if $PYTHON_BIN -m pip --version &>/dev/null; then
         echo -e "${GREEN}Pip is working${NC}"
         return 0
     fi
     
     echo -e "${YELLOW}Bootstrapping pip...${NC}"
     
-    # Try package reinstall
-    apt-get install -y --reinstall python3-pip python3-setuptools python3-wheel || true
-    
-    if python3 -m pip --version &>/dev/null; then
-        echo -e "${GREEN}Pip fixed${NC}"
-        return 0
+    if [ "$OS_TYPE" = "debian" ]; then
+        # Try package reinstall
+        apt-get install -y --reinstall python3-pip python3-setuptools python3-wheel || true
+        
+        if $PYTHON_BIN -m pip --version &>/dev/null; then
+            echo -e "${GREEN}Pip fixed${NC}"
+            return 0
+        fi
+        
+        # Download get-pip.py
+        echo -e "${YELLOW}Downloading pip installer...${NC}"
+        curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py || {
+            echo -e "${RED}Failed to download pip installer${NC}"
+            exit 1
+        }
+        
+        $PYTHON_BIN /tmp/get-pip.py --break-system-packages --force-reinstall || {
+            echo -e "${RED}Failed to install pip${NC}"
+            exit 1
+        }
+        
+        rm -f /tmp/get-pip.py
+    else
+        # Arch: reinstall python-pip
+        pacman -S --noconfirm python-pip || {
+            echo -e "${RED}Failed to install pip${NC}"
+            exit 1
+        }
     fi
     
-    # Download get-pip.py
-    echo -e "${YELLOW}Downloading pip installer...${NC}"
-    curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py || {
-        echo -e "${RED}Failed to download pip installer${NC}"
-        exit 1
-    }
-    
-    python3 /tmp/get-pip.py --break-system-packages --force-reinstall || {
-        echo -e "${RED}Failed to install pip${NC}"
-        exit 1
-    }
-    
-    rm -f /tmp/get-pip.py
-    
-    if ! python3 -m pip --version &>/dev/null; then
+    if ! $PYTHON_BIN -m pip --version &>/dev/null; then
         echo -e "${RED}Pip still not working${NC}"
         exit 1
     fi
@@ -280,9 +340,9 @@ EOF
     sleep 3
     
     if timeout 10 ping -c 3 -W 2 "$WG_INTERNAL_IP" &>/dev/null; then
-        echo -e "${GREEN} KAIROS connection established${NC}"
+        echo -e "${GREEN}✓ KAIROS connection established${NC}"
     else
-        echo -e "${YELLOW} Cannot reach KAIROS server (may still work)${NC}"
+        echo -e "${YELLOW}⚠ Cannot reach KAIROS server (may still work)${NC}"
     fi
 }
 
@@ -294,44 +354,66 @@ install_python_packages() {
     for package in "${packages[@]}"; do
         echo -e "${PURPLE}Installing: $package${NC}"
         
-        # Try up to 3 times
-        local retry=0
         local success=false
         
-        while [ $retry -lt 3 ] && [ "$success" = false ]; do
-            if sudo -u "$TARGET_USER" python3 -m pip install --user --break-system-packages --upgrade "$package" 2>/dev/null; then
+        if [ "$OS_TYPE" = "arch" ]; then
+            # Arch: Try system-wide first with --break-system-packages
+            if python -m pip install --break-system-packages --upgrade "$package" &>/dev/null; then
                 success=true
-                echo -e "${GREEN} $package${NC}"
+            # If that fails, try as the target user
+            elif sudo -u "$TARGET_USER" env HOME="$USER_HOME" python -m pip install --user --upgrade "$package" &>/dev/null; then
+                success=true
+            fi
+        else
+            # Debian: Install as user with break-system-packages
+            if sudo -u "$TARGET_USER" python3 -m pip install --user --break-system-packages --upgrade "$package" &>/dev/null; then
+                success=true
+            fi
+        fi
+        
+        if [ "$success" = true ]; then
+            echo -e "${GREEN}✓ $package${NC}"
+        else
+            # Try base package name
+            local base_package=$(echo "$package" | cut -d'>' -f1 | cut -d'<' -f1 | cut -d'=' -f1)
+            echo -e "${YELLOW}Retrying with base package: $base_package${NC}"
+            
+            if [ "$OS_TYPE" = "arch" ]; then
+                if python -m pip install --break-system-packages --upgrade "$base_package" &>/dev/null; then
+                    success=true
+                elif sudo -u "$TARGET_USER" env HOME="$USER_HOME" python -m pip install --user --upgrade "$base_package" &>/dev/null; then
+                    success=true
+                fi
             else
-                retry=$((retry + 1))
-                if [ $retry -lt 3 ]; then
-                    echo -e "${YELLOW}  Retry $retry/3...${NC}"
-                    sleep 2
-                else
-                    # Try base package name without version
-                    local base_package=$(echo "$package" | cut -d'>' -f1 | cut -d'<' -f1 | cut -d'=' -f1)
-                    
-                    if sudo -u "$TARGET_USER" python3 -m pip install --user --break-system-packages "$base_package" 2>/dev/null; then
-                        echo -e "${GREEN} $base_package (fallback)${NC}"
-                        success=true
-                    else
-                        echo -e "${RED} Failed to install $package${NC}"
-                        exit 1
-                    fi
+                if sudo -u "$TARGET_USER" python3 -m pip install --user --break-system-packages --upgrade "$base_package" &>/dev/null; then
+                    success=true
                 fi
             fi
-        done
+            
+            if [ "$success" = true ]; then
+                echo -e "${GREEN}✓ $base_package${NC}"
+            else
+                echo -e "${YELLOW}⚠ $package (may already be installed)${NC}"
+                # Don't exit - continue with installation
+            fi
+        fi
     done
     
-    echo -e "${GREEN}Python packages installed${NC}"
+    echo -e "${GREEN}Python packages installation complete${NC}"
     
     # Detect binary paths
     echo -e "${BLUE}Detecting Reticulum binaries...${NC}"
     
-    local search_paths=("$USER_HOME/.local/bin" "/usr/local/bin" "/usr/bin")
+    # Search in common locations
+    RNS_BIN=$(which rnsd 2>/dev/null || \
+              sudo -u "$TARGET_USER" which rnsd 2>/dev/null || \
+              find "$USER_HOME/.local/bin" /usr/local/bin /usr/bin -name "rnsd" -type f 2>/dev/null | head -1 || \
+              echo "/usr/bin/rnsd")
     
-    RNS_BIN=$(sudo -u "$TARGET_USER" which rnsd 2>/dev/null || find "${search_paths[@]}" -name "rnsd" -type f 2>/dev/null | head -1 || echo "$USER_HOME/.local/bin/rnsd")
-    NOMADNET_BIN=$(sudo -u "$TARGET_USER" which nomadnet 2>/dev/null || find "${search_paths[@]}" -name "nomadnet" -type f 2>/dev/null | head -1 || echo "$USER_HOME/.local/bin/nomadnet")
+    NOMADNET_BIN=$(which nomadnet 2>/dev/null || \
+                   sudo -u "$TARGET_USER" which nomadnet 2>/dev/null || \
+                   find "$USER_HOME/.local/bin" /usr/local/bin /usr/bin -name "nomadnet" -type f 2>/dev/null | head -1 || \
+                   echo "/usr/bin/nomadnet")
     
     echo -e "${GREEN}RNS: $RNS_BIN${NC}"
     echo -e "${GREEN}Nomadnet: $NOMADNET_BIN${NC}"
@@ -516,6 +598,11 @@ EOF
     # Add user to dialout group for serial device access
     usermod -a -G dialout "$TARGET_USER" 2>/dev/null || true
     
+    # On Arch, also add to uucp group (common for serial devices)
+    if [ "$OS_TYPE" = "arch" ]; then
+        usermod -a -G uucp "$TARGET_USER" 2>/dev/null || true
+    fi
+    
     echo -e "${GREEN}Udev rules created${NC}"
 }
 
@@ -695,7 +782,6 @@ install_kairosctl() {
     echo -e "${BLUE}  Run 'kairosctl' to manage your mesh node${NC}"
 }
 
-
 print_completion() {
     echo ""
     echo -e "${GREEN}════════════════════════════════════════${NC}"
@@ -729,14 +815,18 @@ print_completion() {
     echo -e "${PURPLE}Config:${NC}"
     echo -e "${BLUE}  Reticulum: ~/.reticulum/config${NC}"
     echo -e "${BLUE}  RNode detection: /usr/local/bin/detect-rnodes.sh${NC}"
-    echo -e "${BLUE} Run: 'kairosctl' in the console to manage Reticulum!${NC}"
+    echo -e "${BLUE}  Run: 'kairosctl' in the console to manage Reticulum!${NC}"
     
+    if [ "$OS_TYPE" = "arch" ]; then
+        echo ""
+        echo -e "${YELLOW}Note: On Arch, you may need to log out and back in for group${NC}"
+        echo -e "${YELLOW}      changes (dialout/uucp) to take effect.${NC}"
+    fi
     
     echo ""
     echo -e "${GREEN}Happy meshing! <3 ${NC}"
     echo ""
 }
-
 
 #############################
 ### Main Script
@@ -760,15 +850,23 @@ detect_os
 # Ask about KAIROS access
 ask_kairos_access
 
-# Build package list based on user choice
-FINAL_PACKAGES=("${DEBIAN_PACKAGES[@]}")
-if [[ "$KAIROS_ACCESS" =~ ^[Yy]$ ]]; then
-    FINAL_PACKAGES+=("${KAIROS_PACKAGES[@]}")
-fi
-
-# Check if desktop packages should be installed
-if [ -n "$DISPLAY" ] || [ -d "$USER_HOME/Desktop" ]; then
-    FINAL_PACKAGES+=("${DESKTOP_PACKAGES[@]}")
+# Build package list based on OS and user choice
+if [ "$OS_TYPE" = "debian" ]; then
+    FINAL_PACKAGES=("${DEBIAN_PACKAGES[@]}")
+    if [[ "$KAIROS_ACCESS" =~ ^[Yy]$ ]]; then
+        FINAL_PACKAGES+=("${DEBIAN_KAIROS_PACKAGES[@]}")
+    fi
+    if [ -n "$DISPLAY" ] || [ -d "$USER_HOME/Desktop" ]; then
+        FINAL_PACKAGES+=("${DEBIAN_DESKTOP_PACKAGES[@]}")
+    fi
+else
+    FINAL_PACKAGES=("${ARCH_PACKAGES[@]}")
+    if [[ "$KAIROS_ACCESS" =~ ^[Yy]$ ]]; then
+        FINAL_PACKAGES+=("${ARCH_KAIROS_PACKAGES[@]}")
+    fi
+    if [ -n "$DISPLAY" ] || [ -d "$USER_HOME/Desktop" ]; then
+        FINAL_PACKAGES+=("${ARCH_DESKTOP_PACKAGES[@]}")
+    fi
 fi
 
 # Detect binaries
@@ -800,7 +898,6 @@ echo -e "${PURPLE}[9/15] Creating utility scripts...${NC}"
 create_rnode_detector
 create_serial_udev_rules
 
-
 # Create systemd services
 echo -e "${PURPLE}[10/15] Creating services...${NC}"
 create_systemd_services
@@ -814,19 +911,16 @@ echo -e "${PURPLE}[12/15] Starting services...${NC}"
 start_services
 
 # Install kairosctl
-echo -e "${PURPLE}[12/15] Installing management tool...${NC}"
+echo -e "${PURPLE}[13/15] Installing management tool...${NC}"
 install_kairosctl
 
 # Setup WireGuard (if KAIROS enabled)
-echo -e "${PURPLE}[12.5/15] Network setup...${NC}"
+echo -e "${PURPLE}[14/15] Network setup...${NC}"
 setup_wireguard
 
 # Check status
-echo -e "${PURPLE}[13/15] Checking status...${NC}"
+echo -e "${PURPLE}[15/15] Checking status...${NC}"
 check_service_status
 
 # Print completion info
-echo -e "${PURPLE}[14/15] Finalizing...${NC}"
 print_completion
-
-echo -e "${PURPLE}[15/15] Done!${NC}"
