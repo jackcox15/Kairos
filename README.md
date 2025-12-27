@@ -40,18 +40,18 @@ Option 1: Deploy Scripts (Recommended for technical users)
 - Run shell script for automated setup and preconfigured tools 
 - Works on any x86 Debian, Ubuntu, Pi, or Arch computer
 - Scripts to automate LoRa Config, and easily manage the system
-
+- **complete**
 Option 2: RNode Box (Raspberry Pi relay/repeater)
 - Pre-built Pi Zero system with Pimornai ST7789 display 
 - Solar + battery power for field deployment 
 - LoRa device connected to USB hub, or via MicroUSB cable 
-**work in progress**
+- **work in progress**
   
 Option 3: RNode Gateway
 - Raspberry Pi 4b or 5 with WiFi AP and web interface 
 - Plug and play for non-technical users 
 - 3.5" LCD with real-time status monitoring
-**work in progress**
+- **work in progress**
  
 # Technology Stack
 #### Core:
