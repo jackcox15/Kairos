@@ -1,5 +1,5 @@
 # What is Kairos?
-Kairos is a reproducible deployment system for Reticulum based mesh networks. Its purpose is to make resilient, censorship resistant communication practical and accessible for mutual aid groups, community organizers, independent press, and privacy focused individuals through automation and simple to use tools. 
+Kairos is a reproducible deployment system for Reticulum based mesh networks. Its purpose is to support resilient, make censorship resistant communication practical.
 
 Kairos provides the toolkits, configuration, and workflows needed to deploy and maintain mesh communication nodes on laptops, Raspberry Pis, or LoRa devices with minimal setup and no centralized authority. It turns complex networking into a "plug-and-operate" system, enabling users to build and maintain their own communication infrastructure even in degraded, surveilled, or disconnected environments. These tools give users the power to quickly spin up their own local Reticulum mesh networks and seed resiliant community infrastructure.
 
@@ -13,20 +13,21 @@ Kairos strives to simplify the setup of LoRa radios, Reticulum deployments, and 
 
 - Automated Deployments: using Kairos deploy scripts
 - Hardware Integrations: Plug and play RNode devices with guided firmware flashing of custom PHY settings
-- User Interfaces: MeshChat web UI instead of command line only, RaspberryPi Python programs, and custom management programs
-- Infrastructure Setup: VPS backbone with WireGuard VPN for global connectivity **if you join KairosNet**
+- User Interfaces: MeshChat web UI instead CLI, RaspberryPi Python programs, and custom management programs
+- Infrastructure Setup: VPS backbone with WireGuard VPN for global connectivity **if you join KairosNet, this is totally optional!**
 - Operational Security: Built in OPSEC practices for adversarial environments
 
 Three Layers:
 1. VPS Backbone - Redundant servers for global connectivity through the Kairos VPN network
-      -KairosNet offers offline wikipedia pages, books, classic old internet forum pages. 
+      -KairosNet offers offline wikipedia pages, books, classic old internet forum pages,
+      and more! We host nomadnet BBS style message boards aimed at skill sharing. 
 3. Home Nodes - Your computer + RNode bridging internet and RF mesh
 4. LoRa Network - Local radio mesh (1-20+ mile range, works without internet)
    
 Graceful Degradation:
 - Internet works → Global mesh via VPS + local LoRa
 - Internet fails → Local LoRa mesh only
-- Infrastructure seized → Device-to-device via LoRa 
+- Infrastructure seized → Device-to-device via LoRa
 
 # Quick Start
 #### Every node requires:
@@ -37,18 +38,20 @@ Graceful Degradation:
 ## Deployment Options
 Option 1: Deploy Scripts (Recommended for technical users)
 - Run shell script for automated setup and preconfigured tools 
-- Works on any x86 Debian, Ubuntu, Pi or Arch computer
+- Works on any x86 Debian, Ubuntu, Pi, or Arch computer
 - Scripts to automate LoRa Config, and easily manage the system
 
 Option 2: RNode Box (Raspberry Pi relay/repeater)
 - Pre-built Pi Zero system with Pimornai ST7789 display 
 - Solar + battery power for field deployment 
 - LoRa device connected to USB hub, or via MicroUSB cable 
-      
+**work in progress**
+  
 Option 3: RNode Gateway
 - Raspberry Pi 4b or 5 with WiFi AP and web interface 
 - Plug and play for non-technical users 
-- 3.5" LCD with real-time status monitoring 
+- 3.5" LCD with real-time status monitoring
+**work in progress**
  
 # Technology Stack
 #### Core:
@@ -87,7 +90,6 @@ We welcome contributions that:
 - Enhance user experience for non-technical users 
 - Add monitoring and diagnostic capabilities 
 - Improve documentation 
-See CONTRIBUTING.md for guidelines.
 
 # Credits
 Kairos is built on the incredible work of:
@@ -105,5 +107,5 @@ Checkout the Reticulum-Meshchat Github: (https://github.com/liamcottle/reticulum
 #### For Technical Questions About Reticulum:
 - See the Reticulum community forums (https://github.com/markqvist/Reticulum/discussions)
 #### For KAIROS Deployment:
-- This project operates through trusted networks. If you're involved with mutual aid or community organizing and share our values, reach out through existing community channels, or on Github.
+- This project operates through trusted networks. If you're involved with mutual aid or community organizing and share our values, reach out through existing community channels, or on Github. 
 
