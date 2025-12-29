@@ -7,6 +7,9 @@ Kairos also combines internet based infrastructure (utilizing securely owned vir
 The system is designed for graceful degradation: as infrastructure fails, the network automatically falls back from:
 #### GLOBAL → REGIONAL → LOCAL ONLY
 
+####For more info: https://jackcox15.github.io/Kairos/
+--
+
 ## What Problem Does This Solve?
 Reticulum is a powerful cryptographic network protocol, but deploying it at scale for non-tech savvy people can be difficult. 
 Kairos strives to simplify the setup of LoRa radios, Reticulum deployments, and organically build local resilient communication networks with minimum effort.
