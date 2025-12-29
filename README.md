@@ -7,7 +7,7 @@ Kairos also combines internet based infrastructure (utilizing securely owned vir
 The system is designed for graceful degradation: as infrastructure fails, the network automatically falls back from:
 #### GLOBAL → REGIONAL → LOCAL ONLY
 
-####For more info: https://jackcox15.github.io/Kairos/
+#### For more info: https://jackcox15.github.io/Kairos/
 --
 
 ## What Problem Does This Solve?
