@@ -30,7 +30,7 @@ else
     USER_HOME="$HOME"
 fi
 
-# WireGuard config (replaced by key_baker.sh if using KAIROS net)
+# WireGuard config (replaced by key_baker.sh if using VPS backbone)
 WG_PRIVATE_KEY="__REPLACE_PRIVATE_KEY__"
 WG_PUBLIC_KEY="__REPLACE_PUBLIC_KEY__"
 WG_CLIENT_IP="__REPLACE_CLIENT_IP__"
@@ -38,7 +38,7 @@ WG_SERVER_PUBLIC_KEY="__REPLACE_SERVER_PUBLIC_KEY__"
 WG_ENDPOINT="__REPLACE_ENDPOINT__"
 WG_INTERNAL_IP="__REPLACE_INTERNAL_IP__"
 
-# Track if user wants KAIROS access
+# Track if user wants VPS backbone (internal variable name kept for compatibility)
 KAIROS_ACCESS=""
 
 # Debian/Ubuntu packages
@@ -75,7 +75,7 @@ ARCH_PACKAGES=(
     "openssl"
 )
 
-# Optional packages for KAIROS access
+# Optional packages for VPS backbone
 DEBIAN_KAIROS_PACKAGES=(
     "wireguard"
     "resolvconf"
@@ -252,20 +252,20 @@ bootstrap_pip() {
 ask_kairos_access() {
     echo ""
     echo -e "${CYAN}════════════════════════════════════════${NC}"
-    echo -e "${CYAN}        KAIROS Network Access${NC}"     
+    echo -e "${CYAN}        VPS Backbone Setup${NC}"     
     echo -e "${CYAN}════════════════════════════════════════${NC}"
     echo ""
-    echo -e "${YELLOW}KAIROS provides access to a global mesh network via VPN.${NC}"
-    echo -e "${YELLOW}This requires credentials from the KAIROS admin.${NC}"
+    echo -e "${YELLOW}You can optionally connect this node to your VPS backbone.${NC}"
+    echo -e "${YELLOW}This requires WireGuard credentials from your VPS deployment.${NC}"
     echo ""
-    echo -e "${BLUE}Do you have KAIROS credentials? (y/n)${NC}"
+    echo -e "${BLUE}Do you have VPN credentials for your backbone? (y/n)${NC}"
     read -r KAIROS_ACCESS
     echo ""
     
     if [[ "$KAIROS_ACCESS" =~ ^[Yy]$ ]]; then
-        echo -e "${GREEN}KAIROS mode enabled${NC}"
+        echo -e "${GREEN}VPS backbone mode enabled${NC}"
     else
-        echo -e "${CYAN}Local mesh only, no KAIROS connection${NC}"
+        echo -e "${CYAN}Local mesh only mode${NC}"
     fi
 }
 
@@ -280,17 +280,17 @@ validate_wg_key() {
 
 setup_wireguard() {
     if [[ ! "$KAIROS_ACCESS" =~ ^[Yy]$ ]]; then
-        echo -e "${CYAN}Skipping WireGuard (KAIROS not enabled)${NC}"
+        echo -e "${CYAN}Skipping WireGuard (VPS backbone not enabled)${NC}"
         return 0
     fi
     
-    echo -e "${BLUE}Setting up WireGuard for KAIROS...${NC}"
+    echo -e "${BLUE}Setting up WireGuard VPN for backbone...${NC}"
     
     # Check if keys are configured
     if [[ "$WG_PRIVATE_KEY" == "__REPLACE_PRIVATE_KEY__" ]]; then
         echo -e "${RED}WireGuard keys not configured!${NC}"
-        echo -e "${YELLOW}You need to run key_baker.sh first to bake in your credentials${NC}"
-        echo -e "${YELLOW}Get credentials from your KAIROS admin, then run:${NC}"
+        echo -e "${YELLOW}You need to run key_baker.sh first to bake in your VPN credentials${NC}"
+        echo -e "${YELLOW}Get credentials from your VPS deployment, then run:${NC}"
         echo -e "${CYAN}  ./key_baker.sh${NC}"
         exit 1
     fi
@@ -361,13 +361,13 @@ EOF
     }
     
     # Test connection
-    echo -e "${BLUE}Testing WireGuard connection...${NC}"
+    echo -e "${BLUE}Testing VPN connection...${NC}"
     sleep 3
     
     if timeout 10 ping -c 3 -W 2 "$WG_INTERNAL_IP" &>/dev/null; then
-        echo -e "${GREEN}✓ KAIROS connection established${NC}"
+        echo -e "${GREEN}✓ VPS backbone connection established${NC}"
     else
-        echo -e "${YELLOW}⚠ Cannot reach KAIROS server (may still work)${NC}"
+        echo -e "${YELLOW}⚠ Cannot reach VPS server (may still work)${NC}"
     fi
 }
 
@@ -571,7 +571,7 @@ configure_reticulum() {
     mkdir -p "$config_dir"
     
     if [[ "$KAIROS_ACCESS" =~ ^[Yy]$ ]]; then
-        # KAIROS mode: VPS + local mesh
+        # VPS backbone mode: VPS + local mesh
         cat > "$config_file" << EOF
 [reticulum]
 enable_transport = yes
@@ -583,8 +583,8 @@ loglevel = 3
 
 [interfaces]
 
-  # KAIROS VPS Connection (via WireGuard)
-  [[KAIROS Interface]]
+  # VPS Backbone Connection (via WireGuard)
+  [[VPS Backbone]]
     type = TCPClientInterface
     interface_enabled = yes
     target_host = $WG_INTERNAL_IP
@@ -607,7 +607,7 @@ loglevel = 3
   #   codingrate = 5
 
 EOF
-        echo -e "${GREEN}Config: KAIROS + local mesh${NC}"
+        echo -e "${GREEN}Config: VPS backbone + local mesh${NC}"
     else
         # Local only mode
         cat > "$config_file" << EOF
@@ -885,13 +885,13 @@ print_completion() {
     echo ""
     
     if [[ "$KAIROS_ACCESS" =~ ^[Yy]$ ]]; then
-        echo -e "${CYAN}Mode: KAIROS Network${NC}"
-        echo -e "${BLUE}   Connected to global mesh via VPN${NC}"
+        echo -e "${CYAN}Mode: VPS Backbone + Local Mesh${NC}"
+        echo -e "${BLUE}   Connected to your VPS backbone via VPN${NC}"
         echo -e "${BLUE}   Local mesh discovery enabled${NC}"
     else
         echo -e "${CYAN}Mode: Local Mesh Only${NC}"
         echo -e "${BLUE}   Local mesh discovery enabled${NC}"
-        echo -e "${BLUE}   To join KAIROS later, get credentials and re-run${NC}"
+        echo -e "${BLUE}   To add VPS backbone later, get credentials and re-run${NC}"
     fi
     
     echo ""
@@ -942,7 +942,7 @@ fi
 echo -e "${PURPLE}[1/15] Detecting OS...${NC}"
 detect_os
 
-# Ask about KAIROS access
+# Ask about VPS backbone
 ask_kairos_access
 
 # Build package list based on OS and user choice
@@ -1009,7 +1009,7 @@ start_services
 echo -e "${PURPLE}[13/15] Installing management tool...${NC}"
 install_kairosctl
 
-# Setup WireGuard (if KAIROS enabled)
+# Setup WireGuard (if VPS backbone enabled)
 echo -e "${PURPLE}[14/15] Network setup...${NC}"
 setup_wireguard
 
