@@ -104,12 +104,6 @@ This is **one example**. Your deployment will be different based on:
 
 **Comprehensive guides at:** [https://jackcox15.github.io/Kairos/](https://jackcox15.github.io/Kairos/)
 
-- **[Architecture](https://jackcox15.github.io/Kairos/architecture/)** - How mesh networks work, why this design
-- **[Philosophy](https://jackcox15.github.io/Kairos/philosophy/)** - Infrastructure as mutual aid
-- **[Deployment](https://jackcox15.github.io/Kairos/deployment/)** - Step-by-step setup guides
-- 
----
-
 ## Philosophy: Infrastructure as Mutual Aid
 
 KAIROS represents a different approach to technology:
