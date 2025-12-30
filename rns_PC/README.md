@@ -1,122 +1,208 @@
-# Kairos PC Installer 
-## This script installs and prepares your system for LoRa radio usage, Installs Reticulum, Nomadnet, MeshChat web interface + more!!
-**The goal of Kairos is to make decentralized communication easy to deploy, prepackaged, and accessible to anyone.**
-**This allows you to quickly seed local communities, run resilient communication hubs, and expand your mesh network with minimal effort.**
+# Kairos Deployment Scripts
+## Automated installer for Reticulum mesh networking infrastructure
 
-**Joining the Kairos network is optional! You can run a standalone local mesh, or connect to the Kairos VPS hub if you have credentials. If you do not wish to join the private Kairos network, you can simply select "No"
-during the installer!**
+**The goal of Kairos is to make decentralized communication easy to deploy and accessible to anyone.**
 
-### Installer supports two modes:
-- Local mesh only (If desire is for seeding your own local community)
-- Kairos network mode (VPN tunnel if you have credentials)
-#### After installation you get:
-- Reticulum running as a system service
-- MeshChat at http://localhost:8000
-- Nomadnet CLI
-- Kaiosctl Whiptail TUI for system management
-- Helper scripts for deploying hardware 
-- **Optional:** WireGuard tunnel if you would like to join the Kairos network
+This installer helps you quickly set up:
+- Local Reticulum mesh networks for your community
+- Optional VPS backbone for global connectivity
+- All necessary software and services configured automatically
 
-# Features
-### The script automatically:
-- Installs all required packages (Python, pip, git, curl, Node.js, etc.)
-- Installs Reticulum, Nomadnet, LXMF, and MeshChat
-- Creates a Reticulum config with AutoInterface
-- Adds optional Kairos TCP interface if using VPN tunnel 
-- Installs udev rules for RNodes
-- Creates systemd services for Reticulum and MeshChat
-- Builds and installs the MeshChat web UI
-- Enables and starts all services
-- Optionally creates desktop shortcuts if a desktop environment exists
+---
 
-# Requirements
-- Debian or Ubuntu
-- Now supporting Arch Linux!!
-- Run with sudo
-- Internet access for apt, git, and npm installs
-- For Kairos mode: WireGuard credentials provided by 3n19ma
-### Files in this Folder
-- deploy_rns.sh: main installer
-- key_baker.sh: generates a version of the installer with your WireGuard keys included
+## What This Installs
 
+The deployment script automatically configures:
 
-# How to Run the Installer
-#### Local Mesh Only (no VPN)
-- `git clone https://github.com/jackcox15/Kairos`
-- `cd Kairos/rns_PC`
-- `chmod +x deploy_rns.sh`
-- `sudo ./deploy_rns.sh`
-#### When prompted, choose **no** for KAIROS credentials.
+- **Reticulum Network Stack** - Core mesh routing protocol
+- **Nomadnet** - Mesh services and bulletin boards
+- **MeshChat** - Web-based messaging interface (http://localhost:8000)
+- **LXMF** - Lightweight message format
+- **RNode support** - Automatic detection and configuration for LoRa radios
+- **Systemd services** - Auto-start on boot
+- **Helper scripts** - For hardware deployment and diagnostics
 
-# Kairos Mode: Bake Your Keys Into the Script
-#### To create an installer with your VPN keys:
-- `chmod +x key_baker.sh deploy_rns.sh`
-- `./key_baker.sh`
+---
 
-#### You will be asked for:
-- Client name
-- WireGuard private key
-- WireGuard public key
-- Client IP
-- Server public key
-- Endpoint
-- Internal VPS IP
-#### The script creates: your/directory/configured_scripts/deploy_rns_<YOURCLIENT>.sh
-#### This file is ready to run on the client machine.
+## Deployment Modes
 
+### Mode 1: Local Mesh Only (Recommended to start)
+Deploy a standalone mesh network:
+- Works entirely on local LoRa radio
+- No internet required for operation
+- Perfect for learning, testing, or isolated communities
+- No external dependencies
 
-# Kairos Network Mode (with VPN)
-#### First bake your keys:
-- `./key_baker.sh`
-- Copy the generated script to the client system:
-- `scp /from/your/directory/deploy_rns_<CLIENT>.sh user@client:/to/your/directory`
-- Or run it directly on your machine if running locally!
-- `cd /your/directory/to/Kairos/configured_scripts`
-- `./deploy_rns<yourclientname>`
-##### Choose yes when asked if you have KAIROS credentials.
+### Mode 2: VPS Backbone (Optional)
+Add global connectivity to your local mesh:
+- Connect your local mesh to your VPS infrastructure
+- Requires WireGuard VPN credentials (you deploy your own VPS)
+- Enables communication across cities/regions when internet available
+- Local mesh continues working if VPN/internet fails
 
-# After Installation
-#### You should now have:
-- MeshChat: http://localhost:8000
-- Nomadnet: run nomadnet in a terminal
-- Reticulum config at ~/.reticulum/config
-- RNode detection script at /usr/local/bin/detect-rnodes.sh
-#### Useful commands:
-- `sudo systemctl status reticulum meshchat`
-- `sudo systemctl restart reticulum`
-- `sudo systemctl restart meshchat`
-- `sudo journalctl -u reticulum -f`
-- `sudo journalctl -u meshchat -f`
-#### To detect a plugged-in RNode:
-`detect-rnodes.sh`
-**Expected output**: Your device should appear ( `/dev/ttyUSB0` or `/dev/ttyACM0`)
+**You choose which mode fits your deployment.**
 
-## TUI Management tool "kairosctl"
+---
 
-After installation, use `kairosctl` for easy system management!
+## Requirements
 
-### Quick Start
+**Supported Systems:**
+- Debian 11+
+- Ubuntu 20.04+
+- Raspberry Pi OS
+- Arch Linux
 
-Simply run:
+**Hardware:**
+- Computer with 1GB+ RAM
+- Internet access for initial setup
+- (Optional) RNode LoRa device for local mesh
+
+**For VPS Backbone Mode:**
+- WireGuard credentials from your VPS deployment
+- Utilize the key_baker script to replace the deploy_rns wireguard variables with
+  your own VPN
+
+---
+
+## Quick Start: Local Mesh
+
+**Deploy a standalone local mesh node:**
+
 ```bash
-kairosctl
+# Clone repository
+git clone https://github.com/jackcox15/Kairos
+cd Kairos/rns_PC
+
+# Make script executable
+chmod +x deploy_rns.sh
+
+# Run installer
+sudo ./deploy_rns.sh
 ```
-##Example:
-![Kairosctl Menu](picture_examples/kairosctl_main.png)
 
-This launches an interactive menu where you can:
+**When prompted:**
+- "Do you have VPN credentials?" → Choose **No**
+- The script will configure local mesh only
 
-- **View System Status**
-- **Manage Services** 
-- **View Network Activity** 
-- **View Messages** 
-- **Open Chat Interface** 
-- **VPN Status**
-- **System Health Check**
-- **Quick Fixes** 
-- **Troubleshooting Guide** 
+**What you get:**
+- Reticulum configured for AutoInterface (local discovery)
+- MeshChat web UI at http://localhost:8000
+- Nomadnet CLI available
+- RNode support ready (plug in LoRa device)
+- Services auto-start on boot
 
-For quick status checks:
+---
+
+## VPS Backbone Mode
+
+**If you've deployed your own VPS infrastructure and want to connect this node:**
+
+### Step 1: Generate Configured Installer
+
+The `key_baker.sh` script creates a customized installer with your VPN credentials embedded:
+
 ```bash
-kairosctl status
+# Make scripts executable
+chmod +x key_baker.sh deploy_rns.sh
+
+# Run key baker
+./key_baker.sh
 ```
+
+**You'll be prompted for:**
+- **Client name** 
+- **WireGuard private key**
+- **WireGuard public key**
+- **Client IP**
+- **Server public key** 
+- **Endpoint** 
+- **Internal VPS IP** 
+
+**Output:** Creates `configured_scripts/deploy_rns_<CLIENT>.sh`
+
+### Step 2: Deploy on Target System
+
+**Option A: Deploy on current machine**
+```bash
+cd configured_scripts
+sudo ./deploy_rns_<CLIENT>.sh
+```
+
+**When prompted:**
+- "Do you have VPN credentials?" → Choose **Yes**
+- The script will configure VPN + local mesh
+
+---
+
+## After Installation
+
+### What's Running
+
+**Services:**
+```bash
+# Check status
+sudo systemctl status reticulum
+sudo systemctl status meshchat
+
+# View logs
+sudo journalctl -u reticulum -f
+sudo journalctl -u meshchat -f
+
+# Restart if needed
+sudo systemctl restart reticulum
+sudo systemctl restart meshchat
+```
+
+**Interfaces:**
+- **MeshChat:** http://localhost:8000 (web messaging)
+- **Nomadnet:** Run `nomadnet` in terminal (mesh services, TUI version)
+
+**Configuration:**
+- Reticulum config: `~/.reticulum/config`
+- Identity: `~/.reticulum/identity`
+- Logs: `journalctl -u reticulum`
+
+### Detect RNode Devices
+
+**Plug in your LoRa RNode, then:**
+```bash
+detect-rnodes.sh
+```
+
+**Expected output:**
+```
+Found RNode at /dev/ttyUSB0
+```
+
+**Configure the RNode:**
+```bash
+# See RNode setup guide for configuration
+# Location: /docs/rnode-setup.md
+```
+
+### Management Tool: rnsctl
+
+**Launch interactive menu:**
+```bash
+rnsctl
+```
+
+**Menu options:**
+- View System Status
+- Manage Services (start/stop/restart)
+- View Network Activity
+- View Messages
+- Open Chat Interface
+- VPN Status (if configured)
+- System Health Check
+- Quick Fixes
+- Troubleshooting Guide
+
+**Quick status check:**
+```bash
+rnsctl status
+```
+---
+
+
+**Build your infrastructure. Own your communications.**
