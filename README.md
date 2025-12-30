@@ -1,7 +1,4 @@
-# KAIROS
-
-
-## What is KAIROS?
+# What is KAIROS?
 
 KAIROS is a deployment automation toolkit for Reticulum based mesh networks. It provides scripts, configurations, and documentation to help communities deploy their own resilient communications infrastructure with minimal technical expertise required.
 
@@ -18,7 +15,7 @@ Reticulum is a powerful cryptographic mesh networking protocol, but deploying it
 
 ### The Solution
 
-KAIROS provides:
+Kairos provides:
 - **One-command deployment scripts** - Automated VPS backbone and node setup
 - **Hardware auto config** - Plug and play RNode detection and flashing with your own PHY settings
 - **Reference architectures** - Proven patterns you can replicate to seed local communitiies 
