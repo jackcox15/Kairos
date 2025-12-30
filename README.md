@@ -1,112 +1,172 @@
-# What is Kairos?
-Kairos is a reproducible deployment system for Reticulum based mesh networks. Its purpose is to make resilient, censorship resistant communication practical and accessible for mutual aid groups, community organizers, independent press, and privacy focused individuals through automation and simple to use tools. 
+# KAIROS
 
-Kairos provides the toolkits, configuration, and workflows needed to deploy and maintain mesh communication nodes on laptops, Raspberry Pis, or LoRa devices with minimal setup and no centralized authority. It turns complex networking into a "plug-and-operate" system, enabling users to build and maintain their own communication infrastructure even in degraded, surveilled, or disconnected environments. These tools give users the power to quickly spin up their own local Reticulum mesh networks and seed resiliant community infrastructure.
 
-Kairos also combines internet based infrastructure (utilizing securely owned virtual private servers + via WireGuard) with local LoRa radio networks to create communications that work with or without internet connectivity.
-The system is designed for graceful degradation: as infrastructure fails, the network automatically falls back from:
-#### GLOBAL → REGIONAL → LOCAL ONLY
+## What is KAIROS?
 
-#### For more info: https://jackcox15.github.io/Kairos/
---
+KAIROS is a deployment automation toolkit for Reticulum based mesh networks. It provides scripts, configurations, and documentation to help communities deploy their own resilient communications infrastructure with minimal technical expertise required.
 
-## What Problem Does This Solve?
-Reticulum is a powerful cryptographic network protocol, but deploying it at scale for non-tech savvy people can be difficult. 
-Kairos strives to simplify the setup of LoRa radios, Reticulum deployments, and organically build local resilient communication networks with minimum effort.
+### The Problem
 
-- Automated Deployments: using Kairos deploy scripts
-- Hardware Integrations: Plug and play RNode devices with guided firmware flashing of custom PHY settings
-- User Interfaces: MeshChat web UI instead of command line only, RaspberryPi Python programs, and custom management programs
-- Infrastructure Setup: VPS backbone with WireGuard VPN for global connectivity **if you join KairosNet**
-- Operational Security: Built in OPSEC practices for adversarial environments
+Reticulum is a powerful cryptographic mesh networking protocol, but deploying it requires:
+- Understanding complex networking concepts
+- Manual configuration of LoRa radios
+- VPS setup and hardening
+- Reticulum parameter tuning
+- Integration of multiple components
 
-Three Layers:
-1. VPS Backbone - Redundant servers for global connectivity through the Kairos VPN network
-      -KairosNet offers offline wikipedia pages, books, classic old internet forum pages. 
-3. Home Nodes - Your computer + RNode bridging internet and RF mesh
-4. LoRa Network - Local radio mesh (1-20+ mile range, works without internet)
-   
-Graceful Degradation:
-- Internet works → Global mesh via VPS + local LoRa
-- Internet fails → Local LoRa mesh only
-- Infrastructure seized → Device-to-device via LoRa 
+**For non-technical users or time-limited organizers, this is a barrier.**
 
-# Quick Start
-#### Every node requires:
-- Computer (x86 mini PC, old desktop server, or Raspberry Pi) 
-- LoRa RNode (Heltec v3, LILYGO T-Beam, LoRa32, etc.) 
-- USB cable to connect them, ensure data cables, not just charge.
+### The Solution
 
-## Deployment Options
-Option 1: Deploy Scripts (Recommended for technical users)
-- Run shell script for automated setup and preconfigured tools 
-- Works on any x86 Debian, Ubuntu, Pi or Arch computer
-- Scripts to automate LoRa Config, and easily manage the system
+KAIROS provides:
+- **One-command deployment scripts** - Automated VPS backbone and node setup
+- **Hardware auto config** - Plug and play RNode detection and flashing with your own PHY settings
+- **Reference architectures** - Proven patterns you can replicate to seed local communitiies 
+- **Comprehensive documentation** - Guides that teach concepts, not just commands
+- **Operational security guidance** - OPSEC practices built into deployment
 
-Option 2: RNode Box (Raspberry Pi relay/repeater)
-- Pre-built Pi Zero system with Pimornai ST7789 display 
-- Solar + battery power for field deployment 
-- LoRa device connected to USB hub, or via MicroUSB cable 
-      
-Option 3: RNode Gateway
-- Raspberry Pi 4b or 5 with WiFi AP and web interface 
-- Plug and play for non-technical users 
-- 3.5" LCD with real-time status monitoring 
- 
-# Technology Stack
-#### Core:
-- Reticulum Network Stack - Mesh routing protocol 
-- RNode - LoRa radio interfaces 
-- WireGuard - VPN backbone connectivity 
-#### Applications:
-- MeshChat - Web messaging UI 
-- Nomadnet - Mesh services platform 
-- LXMF - Lightweight message format
+---
 
-# Philosophy: Infrastructure as Mutual Aid
-Kairos represents a different approach to technology infrastructure:
-- Not a Product: No app stores, no subscriptions, no platforms
-- Not a Service: No company, no terms of service, no data collection
-- Not a Startup: No investors, no exit strategy, no growth metrics
-#### Instead: **Community owned infrastructure built through mutual aid principles.**
-#### Target Audience: Trusted networks of like minded people. This is intentionally not mass-market, it's infrastructure for communities who need it or those who want to build it.
+## Hardware Requirements
 
-# Alternative Transports
-While the main Kairos Network uses WireGuard for sovereignty reasons, 
-the Reticulum mesh layer works over any IP transport. You could adapt 
-these scripts to use Tailscale, ZeroTier, I2P, yggsdrasil, or even direct internet 
-connections if that fits your community's needs better.
+**Minimum setup (single node):**
+- Computer: Raspberry Pi 3+, 4, 5, Zero, or x86 (1GB RAM minimum)
+- LoRa Radio: Heltec v3, LILYGO T-Beam, or compatible RNode device
+- USB cable: Data cable (not charge only)
+- Power supply: For continuous operation
 
-# Community & Contribution
-#### Getting Involved
-Kairos operates through trust networks rather than public channels. We carefully vet new participants:
-- Personal connections and trusted referrals preferred 
-- Mutual aid groups and community organizations prioritized 
-- Contributions should align with project values 
+**Recommended for community deployment:**
+- Multiple nodes: Mix of Pi and x86 for different roles
+- External antennas: Improved range for fixed installations
+- Battery backup: UPS or solar for resilience
+- VPS servers: Optional global connectivity (3+ in different regions)
 
-Contributing Code
-We welcome contributions that:
-- Improve deployment automation 
-- Enhance user experience for non-technical users 
-- Add monitoring and diagnostic capabilities 
-- Improve documentation 
-See CONTRIBUTING.md for guidelines.
+**Supported hardware:**
+- **Computers:** Raspberry Pi (Zero, 3, 4, 5), x86 desktops/laptops, mini-PCs
+- **LoRa devices:** Heltec v3, LILYGO T-Beam, LoRa32, compatible ESP32+SX127x/SX126x
+- **Displays:** Pimoroni ST7789, 3.5" TFT for status monitoring
 
-# Credits
-Kairos is built on the incredible work of:
-- Mark Qvist (@markqvist) - Creator of Reticulum, RNode, Nomadnet, and LXMF. This project would not exist without the foundational work Mark has done on the protocol and ecosystem.
-Checkout the Reticulum Github: https://github.com/markqvist/Reticulum
+**Currently works on: Debian, Ubuntu, Raspberry Pi OS, Arch Linux**
 
-- Liam Cottle (@liamcottle) - Creator of MeshChat web interface, providing an accessible UI for Reticulum messaging.
-Checkout the Reticulum-Meshchat Github: (https://github.com/liamcottle/reticulum-meshchat)
-  
-**Kairos is integration and deployment work. Taking these excellent open source tools and making them accessible to non-technical users who need resilient communications.**
+### Deploy on PC, VM, or Server
+- Pre-configured Reticulum environment
+- RNode flashing tools included
+- No installation required
+- Leaves no trace on host
 
-#### Note on OPSEC: While code is open source, operational details (node locations, user identities, deployment strategies) remain confidential. Please respect the security needs of communities using this infrastructure.
+*(Pre-built images coming soon - for now, use deployment scripts)*
 
-## Contact
-#### For Technical Questions About Reticulum:
-- See the Reticulum community forums (https://github.com/markqvist/Reticulum/discussions)
-#### For KAIROS Deployment:
-- This project operates through trusted networks. If you're involved with mutual aid or community organizing and share our values, reach out through existing community channels, or on Github.
+### Deploy as a RaspberryPi Router/Gateway
+**RNode Gateway:** Pi + LoRa + WiFi AP
+- Plug-and-play community access point with AP
+- Web interface for non-technical users accessible on personal devices
+- LCD status display to monitor Reticulum Pi Node
 
+**RNode Box:** Pi Zero + LoRa + solar
+- Field-deployable repeater/relay
+- Battery + solar power
+- Weatherproof enclosure capable
+- Hardware monitoring optional
+
+---
+
+## Example Deployment
+
+**NodeZero HUB** (reference implementation coming soon):
+
+- **Operator:** enigma
+- **Scale:** Multi-city (Detroit/Boston/Cleveland)
+- **Infrastructure:** 3 VPS (Japan, Europe, US)
+- **Nodes:** 10 active (mix of Pi, VM, PC, and LoRa)
+- **Use case:** Kairos Playground for testing with friends
+
+This is **one example**. Your deployment will be different based on:
+- Community size and geography
+- Threat model and security needs
+- Budget and technical capacity
+- Specific use cases
+
+**KAIROS provides the tools. You design your network.**
+
+---
+
+## Technology Stack
+
+**Core components:**
+- [Reticulum Network Stack](https://github.com/markqvist/Reticulum) - Mesh routing protocol (Mark Qvist)
+- [RNode](https://github.com/markqvist/RNode_Firmware) - LoRa radio firmware (Mark Qvist)
+- [MeshChat](https://github.com/liamcottle/reticulum-meshchat) - Web messaging UI (Liam Cottle)
+- [Nomadnet](https://github.com/markqvist/NomadNet) - Mesh services platform (Mark Qvist)
+- WireGuard - VPN backbone connectivity
+
+**KAIROS is deployment automation** - scripts and documentation that make these components deployable by non-experts.
+
+---
+
+## Documentation
+
+**Comprehensive guides at:** [https://jackcox15.github.io/Kairos/](https://jackcox15.github.io/Kairos/)
+
+- **[Architecture](https://jackcox15.github.io/Kairos/architecture/)** - How mesh networks work, why this design
+- **[Philosophy](https://jackcox15.github.io/Kairos/philosophy/)** - Infrastructure as mutual aid
+- **[Deployment](https://jackcox15.github.io/Kairos/deployment/)** - Step-by-step setup guides
+- 
+---
+
+## Philosophy: Infrastructure as Mutual Aid
+
+KAIROS represents a different approach to technology:
+
+### Not a Product
+No app stores, no subscriptions, no platforms.
+
+### Not a Service  
+No company, no terms of service, no data collection.
+
+### A Toolkit
+**Open source tools for communities to build their own infrastructure.**
+
+### Core Principles
+
+**Sovereignty:** Communities own and operate their infrastructure  
+**Resilience:** Multiple redundant paths, graceful degradation  
+**Privacy:** End-to-end encryption, minimal metadata  
+**Accessibility:** Complex tech made usable  
+**Mutual Aid:** Knowledge shared freely, not sold
+
+**Build infrastructure that outlasts its creators.**
+
+---
+
+## Use Cases
+
+### Mutual Aid Networks
+Deploy mesh for coordinating disaster response, resource distribution, and community care without dependency on infrastructure that fails during crises.
+
+### Community Organizing
+Secure communications for organizing actions, coordinating logistics, maintaining operations under surveillance or in hostile environments.
+
+### Independent Press
+Infrastructure to protect sources and maintain communications when corporate platforms face censorship or compromise.
+
+### Disaster Preparedness
+Backup communications when cellular/internet fails. Pre-deployed, tested, ready when needed.
+
+### Privacy-Focused Communities  
+Communications outside surveillance capitalism while maintaining usability for non-technical members.
+
+---
+
+## Credits
+
+KAIROS stands on the shoulders of:
+
+**Mark Qvist ([@markqvist](https://github.com/markqvist))** - Creator of Reticulum, RNode, Nomadnet, LXMF. This project would not exist without Mark's foundational work on the protocol and ecosystem.
+
+**Liam Cottle ([@liamcottle](https://github.com/liamcottle))** - Creator of MeshChat web interface, providing an accessible UI for Reticulum messaging.
+
+**KAIROS is integration work** - taking excellent FOSS tools and making them deployable by communities who need resilient communications.
+
+---
+
+**Build infrastructure that lasts. Share knowledge freely. Own your communications.**
