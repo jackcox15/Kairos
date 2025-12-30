@@ -11,12 +11,12 @@ Reticulum is a powerful cryptographic mesh networking protocol, but deploying it
 - Reticulum parameter tuning
 - Integration of multiple components
 
-**For non-technical users or time-limited organizers, this is a barrier.**
+**For non-technical users or time limited organizers, this is a barrier.**
 
 ### The Solution
 
 Kairos provides:
-- **One-command deployment scripts** - Automated VPS backbone and node setup
+- **One command deployment scripts** - Automated VPS backbone and node setup
 - **Hardware auto config** - Plug and play RNode detection and flashing with your own PHY settings
 - **Reference architectures** - Proven patterns you can replicate to seed local communitiies 
 - **Comprehensive documentation** - Guides that teach concepts, not just commands
@@ -51,16 +51,16 @@ Kairos provides:
 - No installation required
 - Leaves no trace on host
 
-*(Pre-built images coming soon - for now, use deployment scripts)*
+*(Prebuilt images coming soon - for now, use deployment scripts)*
 
 ### Deploy as a RaspberryPi Router/Gateway
 **RNode Gateway:** Pi + LoRa + WiFi AP
-- Plug-and-play community access point with AP
+- Plug and play community access point with AP
 - Web interface for non-technical users accessible on personal devices
 - LCD status display to monitor Reticulum Pi Node
 
 **RNode Box:** Pi Zero + LoRa + solar
-- Field-deployable repeater/relay
+- Field deployable repeater/relay
 - Battery + solar power
 - Weatherproof enclosure capable
 - Hardware monitoring optional
