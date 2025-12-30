@@ -1,8 +1,4 @@
----
-layout: default
-title: Philosophy
-permalink: /philosophy/
----
+
 
 # Infrastructure as Mutual Aid
 
