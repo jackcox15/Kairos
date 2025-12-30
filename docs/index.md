@@ -1,203 +1,177 @@
----
-layout: default
-title: Home
-permalink: /
+# Kairos: Communication That Can't Be Shut Down Easily
 ---
 
-# KAIROS: Infrastructure as Mutual Aid
+## What Is KAIROS?
 
-**Resilient communications that work when everything else fails.**
+KAIROS is a **community owned and operated communication network** that works independently of big tech, internet service providers, and government infrastructure.
 
-Kairos provides the deployment automation, hardware integration,
-and operational frameworks to make advanced mesh networking accessible
-to mutual aid groups, community organizers, and activists who need secure 
-communications independent of corporate infrastructure.
+Think of it as creating your own internet,  one that:
+- **Can't be censored** or shut down by corporations or governments
+- **Works without the internet** using long-range radio technology (RNodes/LoRa)
+- **Costs almost nothing** to run once deployed
+- **Belongs to your community**, not to any company
+
+It's built for mutual aid groups, organizers, journalists, and communities who need reliable communication.
 
 ---
 
-## The goal:
+## Why Does This Matter?
 
-### Community owned infrastructure
-This is entirely built to resist modern internet and strive 
-for a soverign community for any given sceneario. 
+**The Problem:**
+- Internet can be shut down during protests or disasters
+- Platforms ban users and delete communities without warning
+- Survelliance Capitalism is emerging 
+- Emergency services fail exactly when you need them most
 
-### Not a Service/Product
-Not meant to make a profit, be exploitable, etc. 
-only meant to outlast modern surveillance capitalism.  
-No centralized servers that can be seized or shut down.
-
-### Infrastructure
-**Community owned. Community operated. Community sustained.**
-
-Built on mature Free and Open Source Software components,
-configured for resilience, deployed through mutual aid principles.
-
+**The Solution:**
+Kairos gives communities the tools to communicate on their own terms, using technology they control,
+While keeping it moderately it simple.
 ---
 
 ## How It Works
 
-KAIROS combines three infrastructure layers:
+Kairos combines three layers that work together:
 
-### 1. VPS Backbone (Optional - not required to join KairosNet)
-Redundant virtual private servers providing global connectivity when internet is available.  
-*You control the servers. You hold the keys. You own the infrastructure.*
+### Layer 1: Global Network (Optional)
+When you have internet, Kairos connects everyone worldwide through secure encrypted tunnels over securely owned VPS architecture.
+Your messages reach other Kairos users anywhere on Earth using secure VPN tunnels. 
 
-### 2. Local Mesh Nodes
-Your hardware (laptop, Raspberry Pi, mini-PC, LoRa device) running Reticulum Network Stack/RNode.  
-Bridges internet connectivity with local LoRa radio mesh networks.
+### Layer 2: Local Radio Mesh
+Small radio devices create a local network in your city or neighborhood, no internet required. These radios can reach 1-20+ miles depending on setup.
+Radios help facilitate local network traffic, allow new pathways for communication to flow. 
 
-### 3. LoRa Radio Network
-Long-range, low-power radio communications (1-20+ mile range).  
-**Works without internet. Works without infrastructure. Works peer-to-peer securely.**
+### Layer 3: Direct Communication
+Even if everything else fails, two people with Kairos devices can message each other directly through radio waves. 
 
----
-
-## Graceful Degradation
-
-The system is designed to fail gracefully across multiple modes:
-
-```
-GLOBAL CONNECTIVITY
-├─ Internet + VPS backbone through KairosNet (Or host your own VPS!)
-├─ Full mesh across all nodes worldwide
-└─ Encrypted, censorship resistant messaging
-
-    ↓ Internet disrupted	
-
-REGIONAL CONNECTIVITY  
-├─ Local mesh networks hosted by you
-├─ LoRa radio/Reticulum Hosts bridge communities
-└─ City wide or neighborhood coverage
-
-    ↓ Infrastructure seized
-
-LOCAL-ONLY MESH
-├─ Device-to-device radio communications via RNodes/Local Reticulum Hosts
-├─ No central coordination required, total offline messaging locally
-└─ Truly peer-to-peer resilience, fully encrypted based on Radio configuration 
-
-    ↓ All infrastructure destroyed(totally hypothetical) 
-
-PHYSICAL PROXIMITY
-├─ Direct LoRa device-to-device
-├─ Messages passed person-to-person
-└─ Digital sneakernet if needed
-```
-
-**The network degrades, but never fully collapses.**
+**The Magic:** If the internet goes down, KAIROS automatically keeps working using just the radio layer. Your local community can still communicate.
 
 ---
 
-## Core Principles
+## What You Get
 
-### Sovereignty
-Communities own and operate their own infrastructure. 
-No dependency on corporate platforms, government services,
-or external providers beyond commodity VPS hostingthat can be changed at any time.
+KAIROS provides everything you need:
 
-### Resilience  
-Multiple redundant paths ensure communications survive partial failures.
-VPS backbone provides convenience; local mesh ensures survival.
+**For Community Members:**
+- Plug in a USB stick or SD card → instant secure messaging
+      Or run the "deploy_rns" script on current PC 
+- Web interface that feels like any chat app
+- Works on cheap used computers ($30-$50)
 
-### Privacy
-End-to-end encryption by default. Cryptographic identity not tied to legal names,
-phone numbers, or government IDs.
+**For Community Tech People:**
+- Step-by-step setup guides
+- Pre-configured system images
+- Automated hardware configuration tools
+- Network monitoring and status displays
 
-### Accessibility
-Complex technology hidden behind automation and plug-and-play hardware. 
-Overall goal is to allow Non-technical users to operate nodes without
-understanding the underlying protocols. 
+**For Everyone:**
+- End-to-end encrypted by default
+- No phone numbers or real names required
+- Community bulletin boards and file sharing
+- Offline first design that gracefully handles failures
 
-### Mutual Aid
-Not sold as a product or provided as a service. 
-Built collaboratively, shared freely, maintained communally. 
-Technology as a tool, not a commodity.
+---
+---
+
+## The Technology (Explained Simply)
+
+Kairos isn't built from scratch, it combines proven open-source tools:
+
+- **Reticulum**: The core networking protocol (think: the postal service for encrypted messages)
+- **LoRa Radio**: Long-range, low-power radio communication (like walkie-talkies, but 20+ miles)
+- **MeshChat**: The familiar messaging interface you actually use
+- **WireGuard**: Secure internet tunnels when you have connectivity
+
+Everything is **free, open-source, and community-audited**.
 
 ---
 
-## Who This Serves
+## Our Principles
 
-### Mutual Aid Networks
-Coordinate disaster response, resource distribution,
-and community care without depending on systems that may fail precisely when needed most.
+### 1. Community Ownership
+You own the hardware. You control the network. No company can take it away or charge you later.
 
-### Community Organizers
-Communicate securely for organizing actions, coordinating logistics, 
-and maintaining operations in hostile environments or under surveillance.
+### 2. Privacy First
+Messages are encrypted end-to-end. Your identity isn't tied to phone numbers, emails, or government IDs.
 
-### Independent Press  
-Protect sources and maintain communications channels when
-corporate platforms are censored or compromised.
+### 3. Resilience Over Convenience
+The network keeps working even when parts fail. Local communication survives even if global infrastructure collapses.
 
-### Privacy-Focused Individuals
-Communicate outside surveillance capitalism infrastructure 
-while maintaining ease of use and reliability.
+### 4. Mutual Aid, Not Profit
+This isn't a product sold to consumers. It's infrastructure shared freely among communities who need it.
 
----
-
-## What KAIROS Provides
-
-### Automated Deployment
-- Live USB systems that boot on any x86 hardware
-- Pre-configured Raspberry Pi images
-- One command server installation scripts
-- No manual configuration required
-
-### Hardware Integration
-- Automated LoRa radio (RNode) firmware flashing
-- Plug-and-play device detection and configuration  
-- LCD status displays for headless operation
-- Solar + battery power support for field deployment
-
-### User Interface
-- MeshChat web UI for familiar messaging experience
-- Nomadnet for mesh services and bulletin boards
-- Status monitoring and network visualization
-- No command line required for basic operation
-
-### Infrastructure Blueprints
-- VPS backbone setup with WireGuard VPN for KairosNet
-- Multi-tier network architecture 
-- Redundancy and failover configurations
-- Operational security practices
-
----
-
-## Technology Foundation
-
-KAIROS is **systems integration work** built on mature FOSS components:
-
-- **[Reticulum Network Stack](https://github.com/markqvist/Reticulum)** - Cryptographic mesh routing protocol (Mark Qvist)
-- **[MeshChat](https://github.com/liamcottle/reticulum-meshchat)** - Web-based messaging interface (Liam Cottle)  
-- **[Nomadnet](https://github.com/markqvist/NomadNet)** - Mesh services platform (Mark Qvist)
-- **RNode** - LoRa radio interfaces (MarkQvist)
-- **WireGuard** - VPN backbone connectivity
+### 5. Accessible Technology
+Non-technical people can use it. But if you want to understand how it works, everything is documented and open.
 
 ---
 
 ## Getting Started
 
-Ready to build resilient infrastructure for your community?
+Kairos grows through trusted networks, not mass marketing.
 
-- **[Read the Philosophy](/Kairos/philosophy)** - Understand the principles behind infrastructure as mutual aid
-- **[Explore the Architecture](/Kairos/architecture)** - Deep dive into how the system actually works
-- **[Deploy a Node](/Kairos/deployment)** - Technical guide to getting started
-- **[Security Considerations](/Kairos/security)** - Operational security and threat modeling
-- **[Contribute](/Kairos/contributing)** - Join the effort to build community infrastructure
+**If you're part of:**
+- Mutual aid organizations
+- Community organizing groups
+- Neighborhood resilience networks
+- Independent journalism projects
+- Privacy and digital rights communities
+- Hackerspaces / Makerspaces 
 
----
+**...and this resonates with you**, we want to connect.
 
-## A Note on Community
+### Next Steps:
 
-KAIROS operates through **trusted networks**, not mass marketing.
-
-We grow organically through personal connections and mutual aid relationships. 
-If you're involved in community organizing, mutual aid work, or building 
-resilient infrastructure and these principles resonate with you, we'd like to connect!
-
-This is intentionally not mass-market technology. It's infrastructure for communities who need it,
-whenever theyy need it. 
+1. **[Understand the Philosophy](docs/philosophy.md)** — Why we build this way
+2. **[Explore the Architecture](docs/architecture.md)** — How everything fits together
+...
 
 ---
 
-*"From untruth to truth, from darkness to light, from death to immortality."*
+## Who We Are
+
+Kairos is **systems integration work**  we don't invent new technology, we make existing tools accessible to communities who need them.
+
+Core technologies developed by:
+- **Mark Qvist** - Reticulum Network Stack, RNode hardware, LXMF
+- **Liam Cottle** - MeshChat web interface
+
+KAIROS integrates these into deployable systems with:
+- Automated setup scripts
+- Hardware configuration tools
+- User friendly interfaces
+- Community documentation
+
+---
+
+## Frequently Asked Questions
+
+**Is this legal?**
+Yes. Using LoRa radios on the appropriate frequencies is legal in most countries (915MHz in North America, 868MHz in Europe). 
+Always check your local regulations!
+
+**How much does it cost?**
+- USB deployment on existing hardware: Free
+- Basic radio setup: $30-50 for used hardware
+- Full node with custom box: $50-$200 depending on parts
+
+**Do I need internet?**
+Kairos works with or without internet. Internet connectivity enables global reach, but local communication works independently.
+Joining the Kairos Network is optional, you can always connect your own VPN, Tor, I2P, or any other globally reaching interface! 
+
+**How many people can use it?**
+KAIROS scales from 2 people to city-wide networks to global mesh. The Reticulum protocol is designed for networks of thousands of nodes, supporting millions. 
+
+---
+
+## A Final Note
+
+This isn't about technology for technology's sake.
+
+Kairos exists because **communities need to communicate**, especially during moments when communication becomes most difficult, and most critical.
+
+When platforms silence voices, when infrastructure fails, when surveillance becomes oppression, having control over your own communication becomes an act of resistance and resilience.
+
+We're building tools for that future, together.
+
+---
+
+**Ready to build resilient infrastructure?** [Read the Philosophy →](docs/philosophy.md)
