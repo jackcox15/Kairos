@@ -114,18 +114,6 @@ It means:
 
 **Security through usability, not through obscurity.**
 
-### 5. Building for the Long Term
-
-Technology as mutual aid means thinking in decades, not quarters.
-
-KAIROS is designed to:
-- **Outlive its creators** - Documentation, not hero worship
-- **Survive maintainer burnout** - Distributed knowledge, not dependency
-- **Adapt to changing conditions** - Modular components, not monolithic systems
-- **Remain sustainable** - Appropriate technology, not hype cycles
-
-**Infrastructure should be boring, reliable, and invisible.**
-
 ---
 
 ## Why Mesh Networking?
@@ -139,18 +127,18 @@ Every centralized system can be:
 - Sold to hostile parties
 - Discontinued when unprofitable
 
-**Decentralization isn't just ideological - it's practical resilience.**
+**Decentralization isn't just ideological, it's practical resilience.**
 
 ### Mesh Networks Embody Mutual Aid
 
 A mesh network is literally mutual aid made digital:
 
-- **No central authority** - Peers communicate directly
-- **Collective maintenance** - Every node strengthens the network
-- **Resource sharing** - Bandwidth, connectivity, infrastructure
-- **Emergent resilience** - Whole stronger than sum of parts
+- **No central authority** |  Peers communicate directly
+- **Collective maintenance** |  Every node strengthens the network
+- **Resource sharing** |  Bandwidth, connectivity, infrastructure
+- **Emergent resilience** | Whole stronger than sum of parts
 
-When you run a KAIROS node, you're not "using a service" - you're **contributing infrastructure that others can use**, while simultaneously **benefiting from infrastructure others contribute**.
+When you run a KAIROS node, you're not "using a service",  you're **contributing infrastructure that others can use**, while simultaneously **benefiting from infrastructure others contribute**.
 
 This is the technical implementation of mutual aid principles.
 
@@ -160,18 +148,18 @@ This is the technical implementation of mutual aid principles.
 
 *"If this is about decentralization, why use VPS servers at all?"*
 
-Good question. Here's the nuance:
+Here's the nuance:
 
-### VPS as Convenience, Not Dependency
+### VPS as Convenience 
 
 The VPS backbone provides:
 - **Global connectivity** when internet is available
-- **Performance** for bandwidth-intensive applications
-- **Convenience** for everyday use
+- **Performance** for bandwidth intensive applications
+- **Convenience** for everyday use if you need global comms 
 
 But it's not required. The local LoRa mesh works completely independently.
 
-### Commodity Infrastructure, Not Platform Lock-In
+### Commodity Infrastructure
 
 VPS servers are:
 - **Interchangeable** - Move between providers easily
@@ -179,14 +167,12 @@ VPS servers are:
 - **Replaceable** - Lose one, deploy another
 - **Disposable** - Seized? Abandon and redeploy elsewhere
 
-You're not dependent on "the KAIROS servers" - there are no KAIROS servers. There are servers that communities operate, which can be moved, replicated, or replaced.
-
 ### Layered Resilience
 
 The three-tier architecture provides:
 1. **VPS backbone** - Convenience and speed when available
 2. **Local mesh** - Community connectivity when internet fails
-3. **Device-to-device** - Peer communications when all infrastructure is down
+3. **Device to device** - Peer communications when all infrastructure is down
 
 **Each layer fails independently. The system never fully collapses.**
 
@@ -194,7 +180,7 @@ The three-tier architecture provides:
 
 ## Operational Security as Care
 
-OPSEC isn't paranoia - it's community care.
+OPSEC isn't paranoia it's community care.
 
 ### Protecting People, Not Secrets
 
@@ -272,25 +258,6 @@ When you run a KAIROS node:
 - Nobody profits from your participation
 
 **This is technology as gift economy, not commodity exchange.**
-
----
-
-## Success Metrics
-
-We don't measure success by:
-- ❌ User growth rates
-- ❌ Market penetration  
-- ❌ Valuation or funding
-- ❌ Media coverage or hype
-
-We measure success by:
-- ✅ Communities staying connected during crises
-- ✅ Organizers coordinating safely under surveillance
-- ✅ Journalists protecting sources successfully
-- ✅ Infrastructure operating reliably over years
-- ✅ Knowledge spreading to new communities
-
-**The goal is usefulness, not growth.**
 
 ---
 
