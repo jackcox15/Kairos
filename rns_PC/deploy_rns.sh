@@ -14,7 +14,17 @@ NC='\033[0m'
 #############################
 ### Variables
 #############################
-VPS_PORT=8000
+
+# Port Configuration:
+### RETICULUM_PORT (4242): TCP port Reticulum listens on for VPS backbone.
+#  This is the port your VPS Reticulum server should be listening on
+#  Standard Reticulum default, but can be changed if needed for your use case
+### MESHCHAT_PORT (8000): Local web UI port for MeshChat on each node
+#   This is always localhost only, not exposed to network
+### WireGuard (51820): VPN tunnel port, configured separately in WireGuard config
+
+RETICULUM_PORT=4242  # TCP port for Reticulum on VPS backbone
+MESHCHAT_PORT=8000   # MeshChat web UI (localhost only, not used in config)
 REPO=https://github.com/liamcottle/reticulum-meshchat
 INSTALL_DIR="/opt/reticulum-meshchat"
 
@@ -588,7 +598,7 @@ loglevel = 3
     type = TCPClientInterface
     interface_enabled = yes
     target_host = $WG_INTERNAL_IP
-    target_port = $VPS_PORT
+    target_port = $RETICULUM_PORT
 
   # Local mesh discovery
   [[Local Interface]]
