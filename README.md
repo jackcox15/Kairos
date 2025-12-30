@@ -125,8 +125,6 @@ No company, no terms of service, no data collection.
 **Accessibility:** Complex tech made usable  
 **Mutual Aid:** Knowledge shared freely, not sold
 
-**Build infrastructure that outlasts its creators.**
-
 ---
 
 ## Use Cases
