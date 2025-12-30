@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-# WireGuard Credential Baker for KAIROS Deploy Script
+
 # This script creates a customized deploy_rns.sh with your VPS credentials baked in
 
 ############################
