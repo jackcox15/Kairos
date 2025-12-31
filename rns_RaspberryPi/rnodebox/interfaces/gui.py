@@ -4,6 +4,7 @@ import pygame
 import sys
 import os
 import glob
+import threading
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from core import RNodeBox
 
@@ -173,6 +174,12 @@ class RNodeGUI:
         self.focusables = []
         self.focused_index = -1
         
+        self.status_message = ""
+        self.status_color = Colors.GREEN
+        self.status_time = 0
+        self.working = False
+        self.mesh_scroll = 0
+        
         self.refresh_data()
     
     def refresh_data(self):
@@ -180,6 +187,7 @@ class RNodeGUI:
             self.data['services'] = self.box.get_all_services()
             self.data['identity'] = self.box.get_reticulum_identity()
             self.data['nodes'] = self.box.get_mesh_node_count()
+            self.data['destinations'] = self.box.get_announced_destinations()
             self.data['paths'] = self.box.get_path_table()
             self.data['ap_info'] = self.box.get_ap_info()
             self.data['clients'] = self.box.get_ap_clients_count()
@@ -190,9 +198,38 @@ class RNodeGUI:
             self.data['uptime'] = self.box.get_uptime()
             self.data['interfaces'] = self.box.get_all_interface_stats()
             self.data['lora_devices'] = glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*')
-            self.data['vpn_active'] = os.path.exists('/sys/class/net/wg0') or os.path.exists('/sys/class/net/tun0')
+            self.data['vpn_active'] = self.box.is_vpn_active()
         except:
             pass
+    
+    def show_status(self, message, color=None):
+        self.status_message = message
+        self.status_color = color or Colors.GREEN
+        self.status_time = pygame.time.get_ticks()
+    
+    def service_operation(self, operation, service_name):
+        self.working = True
+        self.show_status(f"{operation} {service_name}...", Colors.YELLOW)
+        
+        def run_operation():
+            try:
+                if operation == "Starting":
+                    self.box.start_service(service_name)
+                elif operation == "Stopping":
+                    self.box.stop_service(service_name)
+                elif operation == "Restarting":
+                    self.box.restart_service(service_name)
+                
+                self.refresh_data()
+                self.show_status(f"{service_name} {operation.lower()} complete", Colors.GREEN)
+            except Exception as e:
+                self.show_status(f"Failed: {str(e)}", Colors.RED)
+            finally:
+                self.working = False
+        
+        thread = threading.Thread(target=run_operation)
+        thread.daemon = True
+        thread.start()
     
     def draw_text(self, text, x, y, font, color, align="left"):
         text_surface = font.render(str(text), True, color)
@@ -226,7 +263,7 @@ class RNodeGUI:
         
         temp = self.data.get('cpu_temp', 0)
         temp_color = Colors.RED if temp > 70 else Colors.YELLOW if temp > 60 else Colors.GREEN
-        self.draw_text(f"{temp:.0f}°C", self.scale.w(15), stats_y, self.font_medium, temp_color)
+        self.draw_text(f"{temp:.0f}C", self.scale.w(15), stats_y, self.font_medium, temp_color)
         
         mem = self.data.get('memory', {}).get('percent', 0)
         mem_color = Colors.RED if mem > 80 else Colors.YELLOW if mem > 60 else Colors.GREEN
@@ -238,6 +275,23 @@ class RNodeGUI:
         
         uptime = self.data.get('uptime', '')
         self.draw_text(uptime, self.scale.w(15) + stat_spacing * 3, stats_y, self.font_medium, Colors.TEXT_DIM)
+    
+    def draw_status_message(self):
+        if self.status_message:
+            current_time = pygame.time.get_ticks()
+            if current_time - self.status_time < 3000:
+                bar_height = self.scale.h(90)
+                msg_y = bar_height + self.scale.h(10)
+                
+                pygame.draw.rect(self.screen, Colors.BG_MEDIUM, 
+                               (self.scale.w(15), msg_y, self.width - self.scale.w(30), self.scale.h(40)), 
+                               border_radius=8)
+                pygame.draw.rect(self.screen, self.status_color, 
+                               (self.scale.w(15), msg_y, self.width - self.scale.w(30), self.scale.h(40)), 
+                               2, border_radius=8)
+                
+                self.draw_text(self.status_message, self.width // 2, msg_y + self.scale.h(20), 
+                             self.font_medium, self.status_color, align="center")
     
     def draw_dashboard(self):
         bar_height = self.scale.h(90)
@@ -358,6 +412,14 @@ class RNodeGUI:
         
         for i, item in enumerate(self.focusables):
             item.focused = (i == self.focused_index)
+        
+        if self.working:
+            overlay = pygame.Surface((self.width, self.height))
+            overlay.set_alpha(128)
+            overlay.fill(Colors.BG_DARK)
+            self.screen.blit(overlay, (0, 0))
+            self.draw_text("Working...", self.width // 2, self.height // 2, 
+                         self.font_header, Colors.YELLOW, align="center")
     
     def draw_mesh_screen(self):
         bar_height = self.scale.h(90)
@@ -369,49 +431,65 @@ class RNodeGUI:
         
         gap = self.scale.w(12)
         card_width = (self.width - gap * 3) // 2
-        card_height = self.scale.h(80)
+        card_height = self.scale.h(60)
         
         pygame.draw.rect(self.screen, Colors.BG_MEDIUM, 
                        (gap, y_pos, card_width, card_height), border_radius=8)
         pygame.draw.rect(self.screen, Colors.BORDER, 
                        (gap, y_pos, card_width, card_height), 2, border_radius=8)
         
-        self.draw_text("Identity", gap + 12, y_pos + 12, self.font_medium, Colors.TEXT_SECONDARY)
+        self.draw_text("Identity", gap + 12, y_pos + 12, self.font_small, Colors.TEXT_SECONDARY)
         identity = self.data.get('identity', 'Unknown')
-        max_chars = (card_width - 24) // 12
+        max_chars = (card_width - 24) // 10
         id_display = identity[:max_chars] if len(identity) > max_chars else identity
-        self.draw_text(id_display, gap + 12, y_pos + 45, self.font_medium, Colors.PURPLE_LIGHT)
+        self.draw_text(id_display, gap + 12, y_pos + 35, self.font_small, Colors.PURPLE_LIGHT)
         
         pygame.draw.rect(self.screen, Colors.BG_MEDIUM, 
                        (gap * 2 + card_width, y_pos, card_width, card_height), border_radius=8)
         pygame.draw.rect(self.screen, Colors.BORDER, 
                        (gap * 2 + card_width, y_pos, card_width, card_height), 2, border_radius=8)
         
-        self.draw_text("Nodes", gap * 2 + card_width + 12, y_pos + 12, self.font_medium, Colors.TEXT_SECONDARY)
+        self.draw_text("Total Nodes", gap * 2 + card_width + 12, y_pos + 12, self.font_small, Colors.TEXT_SECONDARY)
         nodes = self.data.get('nodes', 0)
         node_color = Colors.GREEN if nodes > 0 else Colors.YELLOW
-        self.draw_text(str(nodes), gap * 2 + card_width + 12, y_pos + 45, self.font_large, node_color)
+        self.draw_text(str(nodes), gap * 2 + card_width + 12, y_pos + 35, self.font_large, node_color)
         
         y_pos += card_height + gap
         
-        pygame.draw.rect(self.screen, Colors.BG_MEDIUM, 
-                       (gap, y_pos, card_width, card_height), border_radius=8)
-        pygame.draw.rect(self.screen, Colors.BORDER, 
-                       (gap, y_pos, card_width, card_height), 2, border_radius=8)
+        self.draw_text("DISCOVERED NODES", self.scale.w(15), y_pos, self.font_medium, Colors.TEXT_SECONDARY)
+        y_pos += self.scale.h(30)
         
-        self.draw_text("Paths", gap + 12, y_pos + 12, self.font_medium, Colors.TEXT_SECONDARY)
-        paths = len(self.data.get('paths', []))
-        self.draw_text(str(paths), gap + 12, y_pos + 45, self.font_large, Colors.TEXT_PRIMARY)
+        destinations = self.data.get('destinations', [])
         
-        pygame.draw.rect(self.screen, Colors.BG_MEDIUM, 
-                       (gap * 2 + card_width, y_pos, card_width, card_height), border_radius=8)
-        pygame.draw.rect(self.screen, Colors.BORDER, 
-                       (gap * 2 + card_width, y_pos, card_width, card_height), 2, border_radius=8)
-        
-        self.draw_text("Status", gap * 2 + card_width + 12, y_pos + 12, self.font_medium, Colors.TEXT_SECONDARY)
-        status = "Connected" if nodes > 0 else "Isolated"
-        status_color = Colors.GREEN if nodes > 0 else Colors.YELLOW
-        self.draw_text(status, gap * 2 + card_width + 12, y_pos + 45, self.font_large, status_color)
+        if destinations:
+            for dest in destinations:
+                if y_pos > self.height - self.scale.h(100):
+                    break
+                
+                node_height = self.scale.h(55)
+                node_width = self.width - self.scale.w(30)
+                
+                pygame.draw.rect(self.screen, Colors.BG_MEDIUM, 
+                               (self.scale.w(15), y_pos, node_width, node_height), border_radius=8)
+                pygame.draw.rect(self.screen, Colors.BORDER, 
+                               (self.scale.w(15), y_pos, node_width, node_height), 2, border_radius=8)
+                
+                node_hash = dest['hash']
+                hops = dest['hops']
+                
+                short_hash = node_hash[:16] + "..."
+                hops_text = f"{hops} hop{'s' if hops != 1 else ''}"
+                hops_color = Colors.GREEN if hops <= 2 else Colors.YELLOW if hops <= 5 else Colors.ORANGE
+                
+                self.draw_text(short_hash, self.scale.w(25), y_pos + self.scale.h(15), 
+                             self.font_small, Colors.TEXT_PRIMARY)
+                self.draw_text(hops_text, self.scale.w(25), y_pos + self.scale.h(35), 
+                             self.font_small, hops_color)
+                
+                y_pos += node_height + self.scale.h(8)
+        else:
+            self.draw_text("No nodes discovered", self.scale.w(25), y_pos, 
+                         self.font_medium, Colors.TEXT_DIM)
         
         self.buttons = []
         self.focusables = []
@@ -450,9 +528,9 @@ class RNodeGUI:
             rx = self.box.format_bytes(stats.get('rx_bytes', 0))
             tx = self.box.format_bytes(stats.get('tx_bytes', 0))
             
-            self.draw_text(f"↓ {rx}", self.scale.w(25), y_pos + self.scale.h(50), 
+            self.draw_text(f"RX {rx}", self.scale.w(25), y_pos + self.scale.h(50), 
                          self.font_medium, Colors.GREEN)
-            self.draw_text(f"↑ {tx}", self.scale.w(200), y_pos + self.scale.h(50), 
+            self.draw_text(f"TX {tx}", self.scale.w(200), y_pos + self.scale.h(50), 
                          self.font_medium, Colors.PURPLE_LIGHT)
             
             y_pos += card_height + self.scale.h(12)
@@ -590,14 +668,14 @@ class RNodeGUI:
                         self.current_screen = "dashboard"
                         self.focused_index = -1
                     elif item.action == "restart":
-                        self.box.restart_service(item.service)
-                        self.refresh_data()
+                        if not self.working:
+                            self.service_operation("Restarting", item.service)
                     elif item.action == "stop":
-                        os.system(f"sudo systemctl stop {item.service}")
-                        self.refresh_data()
+                        if not self.working:
+                            self.service_operation("Stopping", item.service)
                     elif item.action == "start":
-                        os.system(f"sudo systemctl start {item.service}")
-                        self.refresh_data()
+                        if not self.working:
+                            self.service_operation("Starting", item.service)
     
     def handle_events(self):
         for event in pygame.event.get():
@@ -615,6 +693,9 @@ class RNodeGUI:
                     self.handle_keyboard_navigation(event)
             
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if self.working:
+                    continue
+                
                 click_x, click_y = event.pos
                 
                 if self.logo_rect and self.logo_rect.collidepoint(click_x, click_y):
@@ -635,14 +716,11 @@ class RNodeGUI:
                                 self.current_screen = "dashboard"
                                 self.focused_index = -1
                             elif btn.action == "restart":
-                                self.box.restart_service(btn.service)
-                                self.refresh_data()
+                                self.service_operation("Restarting", btn.service)
                             elif btn.action == "stop":
-                                os.system(f"sudo systemctl stop {btn.service}")
-                                self.refresh_data()
+                                self.service_operation("Stopping", btn.service)
                             elif btn.action == "start":
-                                os.system(f"sudo systemctl start {btn.service}")
-                                self.refresh_data()
+                                self.service_operation("Starting", btn.service)
                             break
     
     def run(self):
@@ -651,7 +729,8 @@ class RNodeGUI:
         while self.running:
             current_time = pygame.time.get_ticks()
             if current_time - self.last_refresh > self.refresh_interval:
-                self.refresh_data()
+                if not self.working:
+                    self.refresh_data()
                 self.last_refresh = current_time
             
             self.screen.fill(Colors.BG_DARK)
@@ -670,6 +749,8 @@ class RNodeGUI:
             elif self.current_screen == "settings":
                 self.draw_settings_screen()
             
+            self.draw_status_message()
+            
             self.handle_events()
             
             pygame.display.flip()
@@ -680,8 +761,8 @@ class RNodeGUI:
 
 if __name__ == "__main__":
     if os.geteuid() != 0:
-        print(" Limited functionality without root")
-        print(" Run: sudo python3 gui.py")
+        print("Limited functionality without root")
+        print("Run: sudo python3 gui.py")
     
     try:
         gui = RNodeGUI()

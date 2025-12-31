@@ -4,13 +4,14 @@ import subprocess
 import os
 import time
 import re
+import glob
 
 class RNodeBox:
     
     def __init__(self):
         self.reticulum_dir = "/root/.reticulum"
         
-    def run_command(self, cmd):
+    def run_command(self, cmd, log_errors=False):
         try:
             result = subprocess.run(
                 cmd,
@@ -19,13 +20,26 @@ class RNodeBox:
                 text=True,
                 timeout=5
             )
+            
+            if log_errors and result.returncode != 0:
+                print(f"Command failed: {cmd}")
+                print(f"Exit code: {result.returncode}")
+                if result.stderr:
+                    print(f"Error: {result.stderr.strip()}")
+            
             return result.stdout.strip()
+            
         except subprocess.TimeoutExpired:
+            if log_errors:
+                print(f"Timeout: {cmd}")
             return ""
+            
         except Exception as e:
+            if log_errors:
+                print(f"Exception: {e}")
             return ""
     
-    # === SERVICE MANAGEMENT ===
+    # SERVICE MANAGEMENT
     
     def get_service_status(self, service_name):
         result = self.run_command(f"systemctl is-active {service_name}")
@@ -42,12 +56,22 @@ class RNodeBox:
         }
         return services
     
+    def start_service(self, service_name):
+        self.run_command(f"sudo systemctl start {service_name}")
+        time.sleep(1)
+        return self.get_service_status(service_name)
+    
+    def stop_service(self, service_name):
+        self.run_command(f"sudo systemctl stop {service_name}")
+        time.sleep(1)
+        return not self.get_service_status(service_name)
+    
     def restart_service(self, service_name):
-        result = self.run_command(f"systemctl restart {service_name}")
+        self.run_command(f"sudo systemctl restart {service_name}")
         time.sleep(2)
         return self.get_service_status(service_name)
     
-    # === RETICULUM INFORMATION ===
+    # RETICULUM INFORMATION
     
     def get_reticulum_identity(self):
         result = self.run_command("rnpath -t")
@@ -97,7 +121,23 @@ class RNodeBox:
                 })
         return paths
     
-    # === NETWORK INTERFACES ===
+    def get_reticulum_interfaces(self):
+        config_path = f"{self.reticulum_dir}/config"
+        
+        if not os.path.exists(config_path):
+            return []
+        
+        interfaces = []
+        result = self.run_command(f"grep -E '\\[\\[.*\\]\\]' {config_path}")
+        
+        for line in result.split('\n'):
+            if line.strip():
+                iface_name = line.replace('[[', '').replace(']]', '').strip()
+                interfaces.append(iface_name)
+        
+        return interfaces
+    
+    # NETWORK INTERFACES
     
     def get_active_interfaces(self):
         result = self.run_command("ip link show | grep '^[0-9]' | awk '{print $2}' | sed 's/:$//'")
@@ -133,7 +173,7 @@ class RNodeBox:
         result = self.run_command(f"ip link show {interface}")
         return 'state UP' in result
     
-    # === ACCESS POINT ===
+    # ACCESS POINT
     
     def get_ap_clients_count(self):
         result = self.run_command("iw dev | grep Interface | awk '{print $2}'")
@@ -168,7 +208,81 @@ class RNodeBox:
             return f"http://{ap_info['ip']}:8000"
         return "Not configured"
     
-    # === SYSTEM HEALTH ===
+    # VPN STATUS
+    
+    def is_vpn_active(self):
+        wg_check = self.run_command("ip link show wg0 2>/dev/null")
+        tun_check = self.run_command("ip link show tun0 2>/dev/null")
+        
+        return bool(wg_check or tun_check)
+    
+    def get_vpn_info(self):
+        if not self.is_vpn_active():
+            return None
+        
+        wg_peers = self.run_command("wg show wg0 peers 2>/dev/null")
+        if wg_peers:
+            peer_count = len(wg_peers.split('\n'))
+            endpoint = self.run_command("wg show wg0 endpoints 2>/dev/null | head -n 1 | awk '{print $2}'")
+            return {
+                'type': 'WireGuard',
+                'interface': 'wg0',
+                'peers': peer_count,
+                'endpoint': endpoint if endpoint else 'N/A'
+            }
+        
+        tun_ip = self.run_command("ip addr show tun0 2>/dev/null | grep 'inet ' | awk '{print $2}'")
+        if tun_ip:
+            return {
+                'type': 'OpenVPN',
+                'interface': 'tun0',
+                'ip': tun_ip
+            }
+        
+        return None
+    
+    # LORA DEVICES
+    
+    def get_lora_devices(self):
+        devices = glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*')
+        return devices
+    
+    def get_lora_device_info(self, device_path):
+        result = self.run_command(f"rnodeconf {device_path} --info 2>/dev/null")
+        
+        if result and 'Device' in result:
+            info_lines = result.split('\n')
+            device_info = {}
+            for line in info_lines:
+                if ':' in line:
+                    key, value = line.split(':', 1)
+                    device_info[key.strip()] = value.strip()
+            
+            return {
+                'path': device_path,
+                'type': 'RNode',
+                'configured': True,
+                'info': device_info
+            }
+        
+        return {
+            'path': device_path,
+            'type': 'Serial Device',
+            'configured': False,
+            'info': {}
+        }
+    
+    def get_all_lora_info(self):
+        devices = self.get_lora_devices()
+        lora_info = []
+        
+        for device in devices:
+            info = self.get_lora_device_info(device)
+            lora_info.append(info)
+        
+        return lora_info
+    
+    # SYSTEM HEALTH
     
     def get_cpu_temp(self):
         temp = self.run_command("cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null")
@@ -221,7 +335,7 @@ class RNodeBox:
         uptime = self.run_command("uptime -p")
         return uptime.replace("up ", "")
     
-    # === TRAFFIC STATS ===
+    # TRAFFIC STATS
     
     def get_total_traffic(self):
         interfaces = self.get_active_interfaces()
@@ -250,11 +364,14 @@ if __name__ == "__main__":
     print("\n[SERVICE STATUS]")
     services = box.get_all_services()
     for service, status in services.items():
-        print(f"  {service}: {'✓ Running' if status else '✗ Stopped'}")
+        print(f"  {service}: {'Running' if status else 'Stopped'}")
     
     print("\n[RETICULUM INFO]")
     print(f"  Identity: {box.get_reticulum_identity()}")
     print(f"  Mesh Nodes: {box.get_mesh_node_count()}")
+    rns_interfaces = box.get_reticulum_interfaces()
+    if rns_interfaces:
+        print(f"  Configured Interfaces: {', '.join(rns_interfaces)}")
     
     print("\n[NETWORK INTERFACES]")
     for iface in box.get_active_interfaces():
@@ -268,8 +385,31 @@ if __name__ == "__main__":
     print(f"  Clients: {box.get_ap_clients_count()}")
     print(f"  MeshChat: {box.get_meshchat_url()}")
     
+    print("\n[VPN STATUS]")
+    if box.is_vpn_active():
+        vpn_info = box.get_vpn_info()
+        if vpn_info:
+            print(f"  Type: {vpn_info['type']}")
+            print(f"  Interface: {vpn_info['interface']}")
+            if 'peers' in vpn_info:
+                print(f"  Peers: {vpn_info['peers']}")
+            if 'endpoint' in vpn_info:
+                print(f"  Endpoint: {vpn_info['endpoint']}")
+    else:
+        print("  VPN: Not Active")
+    
+    print("\n[LORA DEVICES]")
+    lora_devices = box.get_all_lora_info()
+    if lora_devices:
+        for device in lora_devices:
+            print(f"  {device['path']}: {device['type']}")
+            if device['configured']:
+                print(f"    Configured as RNode")
+    else:
+        print("  No LoRa devices detected")
+    
     print("\n[SYSTEM HEALTH]")
-    print(f"  CPU Temp: {box.get_cpu_temp():.1f}°C")
+    print(f"  CPU Temp: {box.get_cpu_temp():.1f}C")
     print(f"  CPU Usage: {box.get_cpu_usage():.1f}%")
     mem = box.get_memory_usage()
     print(f"  Memory: {mem['used']}MB / {mem['total']}MB ({mem['percent']}%)")
