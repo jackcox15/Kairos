@@ -50,10 +50,6 @@ rm -f /etc/dnsmasq.conf
 echo "Cleaning network configs..."
 sed -i '/# RnodeBox Access Point/,+3d' /etc/dhcpcd.conf
 
-#remove auto-login
-echo "Removing auto-login..."
-rm -rf /etc/systemd/system/getty@tty1.service.d/
-
 #uninstall python packages
 echo "Removing Python packages..."
 pip3 uninstall -y rns lxmf nomadnet kivy aiohttp peewee websockets pyserial cx_freeze 2>/dev/null || true
