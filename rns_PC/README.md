@@ -1,7 +1,7 @@
 # Kairos Deployment Scripts
 ## Automated installer for Reticulum mesh networking infrastructure
 
-**The goal of Kairos is to make decentralized communication easy to deploy and accessible to anyone.**
+**The goal of Kairos is to make decentralized mesh communication easy to deploy and accessible to anyone.**
 
 This installer helps you quickly set up:
 - Local Reticulum mesh networks for your community
@@ -35,7 +35,7 @@ Deploy a standalone mesh network:
 
 ### Mode 2: VPS Backbone (Optional)
 Add global connectivity to your local mesh:
-- Connect your local mesh to your VPS infrastructure
+- Connect your local mesh to your VPS infrastructure 
 - Requires WireGuard VPN credentials (you deploy your own VPS)
 - Enables communication across cities/regions when internet available
 - Local mesh continues working if VPN/internet fails
@@ -49,7 +49,6 @@ Add global connectivity to your local mesh:
 **Supported Systems:**
 - Debian 11+
 - Ubuntu 20.04+
-- Raspberry Pi OS
 - Arch Linux
 
 **Hardware:**
@@ -80,22 +79,18 @@ chmod +x deploy_rns.sh
 sudo ./deploy_rns.sh
 ```
 
-**When prompted:**
-- "Do you have VPN credentials?" → Choose **No**
-- The script will configure local mesh only
-
 **What you get:**
 - Reticulum configured for AutoInterface (local discovery)
 - MeshChat web UI at http://localhost:8000
 - Nomadnet CLI available
 - RNode support ready (plug in LoRa device)
-- Services auto-start on boot
+- Services auto start on boot
 
 ---
 
-## VPS Backbone Mode
+## VPS Backbone Setup:
 
-**If you've deployed your own VPS infrastructure and want to connect this node:**
+**If you've deployed your own VPS/VPN infrastructure and want to connect this node:**
 
 ### Step 1: Generate Configured Installer
 
