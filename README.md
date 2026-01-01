@@ -45,13 +45,6 @@ Kairos provides:
 
 **Currently works on: Debian, Ubuntu, Raspberry Pi OS, Arch Linux**
 
-### Deploy on PC, VM, or Server
-- Pre-configured Reticulum environment
-- RNode flashing tools included
-- No installation required
-- Leaves no trace on host
-
-*(Prebuilt images coming soon - for now, use deployment scripts)*
 
 ### Deploy as a RaspberryPi Router/Gateway
 **RNode Gateway:** Pi + LoRa + WiFi AP
