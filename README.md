@@ -59,31 +59,11 @@ Kairos provides:
 - Web interface for non-technical users accessible on personal devices
 - LCD status display to monitor Reticulum Pi Node
 
-**RNode Box:** Pi Zero + LoRa + solar
+**RNode Repeater:** Pi Zero + LoRa + solar
 - Field deployable repeater/relay
 - Battery + solar power
 - Weatherproof enclosure capable
 - Hardware monitoring optional
-
----
-
-## Example Deployment
-
-**NodeZero HUB** (reference implementation coming soon):
-
-- **Operator:** enigma
-- **Scale:** Multi-city (Detroit/Boston/Cleveland)
-- **Infrastructure:** 3 VPS (Japan, Europe, US)
-- **Nodes:** 10 active (mix of Pi, VM, PC, and LoRa)
-- **Use case:** Kairos Playground for testing with friends
-
-This is **one example**. Your deployment will be different based on:
-- Community size and geography
-- Threat model and security needs
-- Budget and technical capacity
-- Specific use cases
-
-**KAIROS provides the tools. You design your network.**
 
 ---
 
