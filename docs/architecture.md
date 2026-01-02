@@ -57,13 +57,13 @@ VPS Server (US) ←→ WireGuard VPN ←→ Local Nodes
          ↓ (WireGuard VPN tunnel)
          ↓
   ┌─────────────────────┐
-  │  Your KAIROS Node   │
+  │     Your  Node      │
   │  (Laptop/Pi/PC)     │
   ├─────────────────────┤
   │ eth0 or wlan0       │ ← Gets internet from your router/WiFi
   │ wg0                 │ ← Encrypted tunnel to VPS backbone  
   │ usb0                │ ← RNode LoRa radio (local mesh)
-  │ wlan0 (optional)    │ ← WiFi access point for local users
+  │ wlan1 (optional)    │ ← WiFi access point for local users
   └─────────────────────┘
          ↓
     [LoRa Radio Network]
@@ -81,7 +81,7 @@ Your device connects to the internet using either:
 ### Step 2: VPS Backbone Connection
 Once online, WireGuard automatically creates a secure tunnel:
 - **wg0** interface appears
-- Encrypted connection to KAIROS VPS backbone established
+- Encrypted connection to VPS backbone established
 - Your node joins the global mesh network
 
 ### Step 3: Local Radio Network
@@ -118,7 +118,7 @@ LoRa copy arrives later (ignored, already received)
 
 ### Scenario 2: Internet Dies
 ```
-Message to another KAIROS user
+Message to another user
     ↓
 Reticulum tries:
     ├─ wg0 → [OFFLINE - no internet] 
@@ -131,7 +131,7 @@ They receive via LoRa only
 
 ### Scenario 3: No Internet, Never Had Internet
 ```
-Message to nearby KAIROS user
+Message to nearby  user
     ↓
 Reticulum only has:
     └─ usb0 → LoRa mesh → Their usb0 device
@@ -141,7 +141,7 @@ Works perfectly within radio range/Line of sight
 
 **Result**: Completely independent local mesh network
 
-## Your Node's Role: Router, Not Translator
+## Your Node's Role: Router/Forwarder Not Translator
 
 Think of your device as a **smart post office**, not a translator:
 
@@ -149,7 +149,7 @@ Think of your device as a **smart post office**, not a translator:
    - Local LoRa radio (usb0 or acm0)
    - VPN tunnel (wg0)
    - Local WiFi clients (wlan0 - optional)
-   - Any other medium in you're using to build the network
+   - Any other medium you're using to build the network
 
 2. **Routes** packets to their destination using:
    - Best available path
@@ -212,7 +212,7 @@ For end users, all of this happens automatically:
 
 ## Summary
 
-Your KAIROS node doesn't just "translate" between networks - it's a **redundant routing node** that:
+Your node doesn't just "translate" between networks, it's a **redundant routing node** that:
 
  - Maintains multiple simultaneous connections  
  - Routes packets intelligently across all interfaces  
@@ -220,11 +220,8 @@ Your KAIROS node doesn't just "translate" between networks - it's a **redundant 
  - Extends mesh network reach by relaying for others  
  - Works standalone or as part of global infrastructure  
 
-This architecture is what makes KAIROS **infrastructure as mutual aid**
-each node strengthens the whole network while remaining independently functional.
-
 **Components:**
-- x86 computer, Raspberry Pi, or similar
+- x86 Linux computer, Raspberry Pi, or similar
 - LoRa RNode connected via USB
 - Reticulum configured for multi interface
 - Optional WiFi access point for clients 
@@ -249,7 +246,7 @@ Most mesh protocols are tied to specific hardware or network layers. Reticulum t
 - Tor: TCP/IP only
 
 **Reticulum:**
-- LoRa, TCP/IP, I2P, Serial, UDP, Sneakernet, all the same
+- LoRa, TCP/IP, I2P, Serial, UDP, Sneakernet, yggsdrasil, all the same
 - Automatic multi-interface routing
 - Cryptographic identity independent of transport
 
