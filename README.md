@@ -18,6 +18,7 @@ Kairos is a deployment automation toolkit for Reticulum based mesh networks. It 
 - **Displays:** Pimoroni ST7789, 3.5" TFT for status monitoring
 
 **Currently works on: Debian, Ubuntu, Raspberry Pi OS, Arch Linux**
+---
 
 ## Deploy as a RaspberryPi Router/Gateway
 **RNode Gateway:** Pi + LoRa + WiFi AP
@@ -54,7 +55,6 @@ Kairos is a deployment automation toolkit for Reticulum based mesh networks. It 
 **Comprehensive guides / explainations at:** [https://jackcox15.github.io/Kairos/](https://jackcox15.github.io/Kairos/)
 
 ## Philosophy: Infrastructure as Mutual Aid
-
 Kairos represents a different approach to technology:
 
 ### Not a Product
@@ -64,7 +64,7 @@ No app stores, no subscriptions, no platforms.
 No company, no terms of service, no data collection.
 
 ### A Toolkit
-**Open source tools for communities to build their own infrastructure.**
+**Open source tools for communities and people to build their own infrastructure.**
 
 ---
 
@@ -95,7 +95,7 @@ Kairos stands on the shoulders of:
 
 **Liam Cottle ([@liamcottle](https://github.com/liamcottle))** - Creator of MeshChat web interface, providing an accessible UI for Reticulum messaging.
 
-**KAIROS is integration work** - taking excellent FOSS tools and making them deployable by communities who need resilient communications.
+**Kairos is integration work** - taking excellent FOSS tools and making them deployable by communities who need resilient communications.
 
 ---
 
