@@ -19,7 +19,7 @@ KAIROS is a deployment automation toolkit for Reticulum based mesh networks. It 
 
 **Currently works on: Debian, Ubuntu, Raspberry Pi OS, Arch Linux**
 
-### Deploy as a RaspberryPi Router/Gateway
+## Deploy as a RaspberryPi Router/Gateway
 **RNode Gateway:** Pi + LoRa + WiFi AP
 - Plug and play community access point with AP
 - Web interface for non-technical users accessible on personal devices
@@ -30,6 +30,11 @@ KAIROS is a deployment automation toolkit for Reticulum based mesh networks. It 
 - Battery + solar power
 - Weatherproof enclosure capable
 - Hardware monitoring optional
+
+## Deploy on a PC
+- Full setup including Meshchat, Nomadnet, and Reticulum services
+- RNode detection scripts, flashing assistance, custom PHY settings made easy
+- Supports Wireguard VPN / VPS setups and auto bakes into the reticulum config
 
 ---
 
