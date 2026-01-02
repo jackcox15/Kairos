@@ -1,6 +1,7 @@
 # KAIROS Architecture
 
 **Technical deep dive into resilient mesh networking infrastructure.**
+**Using my local community network for examples**
 
 ---
 
