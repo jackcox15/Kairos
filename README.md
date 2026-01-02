@@ -1,6 +1,6 @@
-# What is KAIROS?
+# What is Kairos?
 
-KAIROS is a deployment automation toolkit for Reticulum based mesh networks. It provides scripts, configurations, and documentation to help deploy your own resilient communications infrastructure with minimal technical expertise required.
+Kairos is a deployment automation toolkit for Reticulum based mesh networks. It provides scripts, configurations, and documentation to help deploy your own resilient communications infrastructure with minimal technical expertise required.
 
 ---
 
@@ -71,19 +71,19 @@ No company, no terms of service, no data collection.
 ## Use Cases
 
 ### Mutual Aid Networks
-Deploy mesh for coordinating disaster response, resource distribution, and community care without dependency on infrastructure that fails during crises.
+- Deploy mesh for coordinating disaster response, resource distribution, and community care without dependency on infrastructure that fails during crises.
 
 ### Community Organizing
-Secure communications for organizing actions, coordinating logistics, maintaining operations under surveillance or in hostile environments.
+- Secure communications for organizing actions, coordinating logistics, maintaining operations under surveillance or in hostile environments.
 
 ### Independent Press
-Infrastructure to protect sources and maintain communications when corporate platforms face censorship or compromise.
+- Infrastructure to protect sources and maintain communications when corporate platforms face censorship or compromise.
 
 ### Disaster Preparedness
-Backup communications when cellular/internet fails. Pre-deployed, tested, ready when needed.
+- Backup communications when cellular/internet fails. Pre-deployed, tested, ready when needed.
 
 ### Privacy focused communities  
-Communications outside surveillance capitalism while maintaining usability for non-technical members.
+- Communications outside surveillance capitalism while maintaining usability for non-technical members.
 
 ---
 
