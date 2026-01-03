@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 ############################
-### Colors :)
+### Colors
 ############################
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -25,8 +25,10 @@ NC='\033[0m'
 
 RETICULUM_PORT=4242  # TCP port for Reticulum on VPS backbone
 MESHCHAT_PORT=8000   # MeshChat web UI (localhost only, not used in config)
-REPO=https://github.com/liamcottle/reticulum-meshchat
+MESHCHAT_REPO="${MESHCHAT_REPO:-https://github.com/liamcottle/reticulum-meshchat}"
+MESHCHAT_BRANCH="${MESHCHAT_BRANCH:-master}"
 INSTALL_DIR="/opt/reticulum-meshchat"
+INSTALL_LOG="/tmp/rns_install_$(date +%Y%m%d_%H%M%S).log"
 
 # OS detection variable
 OS_TYPE=""
@@ -48,8 +50,14 @@ WG_SERVER_PUBLIC_KEY="__REPLACE_SERVER_PUBLIC_KEY__"
 WG_ENDPOINT="__REPLACE_ENDPOINT__"
 WG_INTERNAL_IP="__REPLACE_INTERNAL_IP__"
 
-# Track if user wants VPS backbone (internal variable name kept for compatibility)
-KAIROS_ACCESS=""
+# Track if user wants VPS backbone
+VPS_BACKBONE=""
+
+# Track installation state for cleanup
+INSTALLATION_STARTED=false
+PACKAGES_INSTALLED=false
+MESHCHAT_CLONED=false
+SERVICES_CREATED=false
 
 # Debian/Ubuntu packages
 DEBIAN_PACKAGES=(
@@ -86,12 +94,12 @@ ARCH_PACKAGES=(
 )
 
 # Optional packages for VPS backbone
-DEBIAN_KAIROS_PACKAGES=(
+DEBIAN_VPS_PACKAGES=(
     "wireguard"
     "resolvconf"
 )
 
-ARCH_KAIROS_PACKAGES=(
+ARCH_VPS_PACKAGES=(
     "wireguard-tools"
     "openresolv"
 )
@@ -128,15 +136,46 @@ PYTHON_BIN=""
 # Functions
 #############################
 
+log_message() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$INSTALL_LOG"
+}
+
+cleanup_on_failure() {
+    echo -e "${RED}Installation failed, cleaning up...${NC}"
+    log_message "ERROR: Installation failed, running cleanup"
+    
+    if [ "$SERVICES_CREATED" = true ]; then
+        systemctl stop reticulum meshchat 2>/dev/null || true
+        systemctl disable reticulum meshchat 2>/dev/null || true
+        rm -f /etc/systemd/system/reticulum.service
+        rm -f /etc/systemd/system/meshchat.service
+        systemctl daemon-reload
+        log_message "Cleaned up systemd services"
+    fi
+    
+    if [ "$MESHCHAT_CLONED" = true ] && [ -d "$INSTALL_DIR" ]; then
+        echo -e "${YELLOW}MeshChat directory left at $INSTALL_DIR for inspection${NC}"
+        log_message "Left MeshChat directory for inspection"
+    fi
+    
+    echo -e "${YELLOW}Installation log saved to: $INSTALL_LOG${NC}"
+    echo -e "${YELLOW}Review the log for details about the failure${NC}"
+    
+    exit 1
+}
+
 detect_os() {
     if [ -f /etc/arch-release ]; then
         echo -e "${BLUE}Detected: Arch Linux${NC}"
         OS_TYPE="arch"
+        log_message "Detected OS: Arch Linux"
     elif [ -f /etc/debian_version ]; then
         echo -e "${BLUE}Detected: Debian/Ubuntu${NC}"
         OS_TYPE="debian"
+        log_message "Detected OS: Debian/Ubuntu"
     else
         echo -e "${RED}Unsupported OS. This script supports Debian/Ubuntu and Arch Linux${NC}"
+        log_message "ERROR: Unsupported OS detected"
         exit 1
     fi
 }
@@ -146,10 +185,12 @@ detect_binary_paths() {
     
     PYTHON_BIN=$(which python3 2>/dev/null || which python 2>/dev/null) || {
         echo -e "${RED}Python not found in PATH${NC}"
+        log_message "ERROR: Python not found"
         exit 1
     }
     
     echo -e "${GREEN}Python: $PYTHON_BIN${NC}"
+    log_message "Python binary: $PYTHON_BIN"
 }
 
 check_package_installed() {
@@ -162,162 +203,244 @@ check_package_installed() {
     fi
 }
 
+check_disk_space() {
+    local required_mb=2048
+    local available_mb=$(df /opt | awk 'NR==2 {print int($4/1024)}')
+    
+    if [ "$available_mb" -lt "$required_mb" ]; then
+        echo -e "${RED}Insufficient disk space${NC}"
+        echo -e "${YELLOW}Required: ${required_mb}MB, Available: ${available_mb}MB${NC}"
+        log_message "ERROR: Insufficient disk space: ${available_mb}MB available, ${required_mb}MB required"
+        exit 1
+    fi
+    
+    log_message "Disk space check passed: ${available_mb}MB available"
+}
+
 install_system_packages() {
     local packages=("$@")
     local to_install=()
     
     echo -e "${BLUE}Checking system packages...${NC}"
+    log_message "Checking system packages"
     
     for package in "${packages[@]}"; do
         if check_package_installed "$package"; then
-            echo -e "${GREEN}✓ $package${NC}"
+            echo -e "${GREEN}Installed: $package${NC}"
         else
-            echo -e "${YELLOW}  $package (will install)${NC}"
+            echo -e "${YELLOW}Will install: $package${NC}"
             to_install+=("$package")
         fi
     done
     
     if [ ${#to_install[@]} -gt 0 ]; then
         echo -e "${PURPLE}Installing ${#to_install[@]} packages...${NC}"
+        log_message "Installing packages: ${to_install[*]}"
         
         if [ "$OS_TYPE" = "debian" ]; then
-            # Debian/Ubuntu installation
-            apt-get update || {
+            apt-get update >> "$INSTALL_LOG" 2>&1 || {
                 echo -e "${RED}Failed to update package list${NC}"
-                exit 1
+                log_message "ERROR: apt-get update failed"
+                cleanup_on_failure
             }
             
-            apt-get install -y "${to_install[@]}" || {
+            apt-get install -y "${to_install[@]}" >> "$INSTALL_LOG" 2>&1 || {
                 echo -e "${RED}Failed to install system packages${NC}"
-                exit 1
+                echo -e "${YELLOW}Check log: $INSTALL_LOG${NC}"
+                log_message "ERROR: apt-get install failed"
+                cleanup_on_failure
             }
         else
-            # Arch Linux installation
-            pacman -Sy --noconfirm || {
+            pacman -Sy --noconfirm >> "$INSTALL_LOG" 2>&1 || {
                 echo -e "${RED}Failed to update package database${NC}"
-                exit 1
+                log_message "ERROR: pacman -Sy failed"
+                cleanup_on_failure
             }
             
-            pacman -S --noconfirm "${to_install[@]}" || {
+            pacman -S --noconfirm "${to_install[@]}" >> "$INSTALL_LOG" 2>&1 || {
                 echo -e "${RED}Failed to install system packages${NC}"
-                exit 1
+                echo -e "${YELLOW}Check log: $INSTALL_LOG${NC}"
+                log_message "ERROR: pacman -S failed"
+                cleanup_on_failure
             }
         fi
         
         echo -e "${GREEN}System packages installed${NC}"
+        log_message "System packages installed successfully"
+        PACKAGES_INSTALLED=true
     else
         echo -e "${GREEN}All packages already installed${NC}"
+        log_message "All system packages already installed"
     fi
 }
 
 bootstrap_pip() {
     echo -e "${BLUE}Checking pip...${NC}"
+    log_message "Checking pip installation"
     
-    # Check if pip works
     if $PYTHON_BIN -m pip --version &>/dev/null; then
         echo -e "${GREEN}Pip is working${NC}"
+        log_message "Pip is working"
         return 0
     fi
     
     echo -e "${YELLOW}Bootstrapping pip...${NC}"
+    log_message "Bootstrapping pip"
     
     if [ "$OS_TYPE" = "debian" ]; then
-        # Try package reinstall
-        apt-get install -y --reinstall python3-pip python3-setuptools python3-wheel || true
+        apt-get install -y --reinstall python3-pip python3-setuptools python3-wheel >> "$INSTALL_LOG" 2>&1 || true
         
         if $PYTHON_BIN -m pip --version &>/dev/null; then
             echo -e "${GREEN}Pip fixed${NC}"
+            log_message "Pip fixed via package reinstall"
             return 0
         fi
         
-        # Download get-pip.py
         echo -e "${YELLOW}Downloading pip installer...${NC}"
-        curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py || {
+        log_message "Downloading get-pip.py"
+        curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py >> "$INSTALL_LOG" 2>&1 || {
             echo -e "${RED}Failed to download pip installer${NC}"
-            exit 1
+            log_message "ERROR: Failed to download get-pip.py"
+            cleanup_on_failure
         }
         
-        $PYTHON_BIN /tmp/get-pip.py --break-system-packages --force-reinstall || {
+        $PYTHON_BIN /tmp/get-pip.py --break-system-packages --force-reinstall >> "$INSTALL_LOG" 2>&1 || {
             echo -e "${RED}Failed to install pip${NC}"
-            exit 1
+            log_message "ERROR: get-pip.py failed"
+            cleanup_on_failure
         }
         
         rm -f /tmp/get-pip.py
     else
-        # Arch: reinstall python-pip
-        pacman -S --noconfirm python-pip || {
+        pacman -S --noconfirm python-pip >> "$INSTALL_LOG" 2>&1 || {
             echo -e "${RED}Failed to install pip${NC}"
-            exit 1
+            log_message "ERROR: Failed to install pip on Arch"
+            cleanup_on_failure
         }
     fi
     
     if ! $PYTHON_BIN -m pip --version &>/dev/null; then
         echo -e "${RED}Pip still not working${NC}"
-        exit 1
+        log_message "ERROR: Pip installation failed"
+        cleanup_on_failure
     fi
     
     echo -e "${GREEN}Pip installed${NC}"
+    log_message "Pip installed successfully"
 }
 
-ask_kairos_access() {
+ask_vps_backbone() {
     echo ""
-    echo -e "${CYAN}════════════════════════════════════════${NC}"
+    echo -e "${CYAN}========================================${NC}"
     echo -e "${CYAN}        VPS Backbone Setup${NC}"     
-    echo -e "${CYAN}════════════════════════════════════════${NC}"
+    echo -e "${CYAN}========================================${NC}"
     echo ""
     echo -e "${YELLOW}You can optionally connect this node to your VPS backbone.${NC}"
     echo -e "${YELLOW}This requires WireGuard credentials from your VPS deployment.${NC}"
     echo ""
     echo -e "${BLUE}Do you have VPN credentials for your backbone? (y/n)${NC}"
-    read -r KAIROS_ACCESS
+    read -r VPS_BACKBONE
     echo ""
     
-    if [[ "$KAIROS_ACCESS" =~ ^[Yy]$ ]]; then
+    if [[ "$VPS_BACKBONE" =~ ^[Yy]$ ]]; then
         echo -e "${GREEN}VPS backbone mode enabled${NC}"
+        log_message "User selected VPS backbone mode"
     else
         echo -e "${CYAN}Local mesh only mode${NC}"
+        log_message "User selected local mesh only mode"
     fi
 }
 
 validate_wg_key() {
     local key="$1"
     local key_name="$2"
-    if [[ ! "$key" =~ ^[A-Za-z0-9+/]{43}=$ ]]; then
+    
+    # WireGuard keys are 44 characters of base64 (32 bytes encoded)
+    if [[ ! "$key" =~ ^[A-Za-z0-9+/]{43}=$ ]] && [[ ! "$key" =~ ^[A-Za-z0-9+/]{44}$ ]]; then
         echo -e "${RED}Invalid WireGuard key format for $key_name${NC}"
-        exit 1
+        echo -e "${YELLOW}Keys should be 44 characters of base64${NC}"
+        log_message "ERROR: Invalid WireGuard key format: $key_name"
+        cleanup_on_failure
     fi
 }
 
+validate_ip() {
+    local ip="$1"
+    local ip_name="$2"
+    
+    # Validate RFC1918 private IP (10.x.x.x range)
+    if [[ ! "$ip" =~ ^10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(/[0-9]{1,2})?$ ]]; then
+        echo -e "${RED}Invalid IP for $ip_name: $ip${NC}"
+        echo -e "${YELLOW}Must be in 10.x.x.x range${NC}"
+        log_message "ERROR: Invalid IP: $ip_name = $ip"
+        cleanup_on_failure
+    fi
+}
+
+
 setup_wireguard() {
-    if [[ ! "$KAIROS_ACCESS" =~ ^[Yy]$ ]]; then
+    if [[ ! "$VPS_BACKBONE" =~ ^[Yy]$ ]]; then
         echo -e "${CYAN}Skipping WireGuard (VPS backbone not enabled)${NC}"
+        log_message "Skipping WireGuard setup"
         return 0
     fi
     
     echo -e "${BLUE}Setting up WireGuard VPN for backbone...${NC}"
+    log_message "Setting up WireGuard"
     
-    # Check if keys are configured
     if [[ "$WG_PRIVATE_KEY" == "__REPLACE_PRIVATE_KEY__" ]]; then
-        echo -e "${RED}WireGuard keys not configured!${NC}"
+        echo -e "${RED}WireGuard keys not configured${NC}"
         echo -e "${YELLOW}You need to run key_baker.sh first to bake in your VPN credentials${NC}"
         echo -e "${YELLOW}Get credentials from your VPS deployment, then run:${NC}"
         echo -e "${CYAN}  ./key_baker.sh${NC}"
-        exit 1
+        log_message "ERROR: WireGuard keys not configured"
+        cleanup_on_failure
     fi
     
-    # Validate keys
     validate_wg_key "$WG_PRIVATE_KEY" "private key"
     validate_wg_key "$WG_SERVER_PUBLIC_KEY" "server public key"
+    validate_ip "$WG_CLIENT_IP" "client IP"
+    validate_ip "$WG_INTERNAL_IP" "server internal IP"
     
-    # Validate IP
-    if [[ ! "$WG_CLIENT_IP" =~ ^10\.5\.5\.[0-9]+$ ]]; then
-        echo -e "${RED}Invalid client IP: $WG_CLIENT_IP${NC}"
-        exit 1
+    # Extract VPN subnet from client IP automatically
+    # Example: 10.5.5.10 -> 10.5.5.0/24
+    local vpn_subnet=$(echo "$WG_CLIENT_IP" | cut -d'.' -f1-3).0/24
+    
+    echo -e "${BLUE}VPN subnet detected: $vpn_subnet${NC}"
+    log_message "VPN subnet: $vpn_subnet"
+    
+    # Verify this won't conflict with existing network
+    echo -e "${YELLOW}Checking for network conflicts...${NC}"
+    
+    # Get current IP addresses on all interfaces
+    local existing_ips=$(ip -4 addr show | grep -oP '(?<=inet\s)\d+\.\d+\.\d+\.\d+' | grep -v '127.0.0.1')
+    local vpn_network_prefix=$(echo "$vpn_subnet" | cut -d'.' -f1-3)
+    
+    # Check if any existing IP is in the same subnet as VPN
+    local conflict=false
+    while IFS= read -r existing_ip; do
+        local existing_prefix=$(echo "$existing_ip" | cut -d'.' -f1-3)
+        if [ "$existing_prefix" = "$vpn_network_prefix" ]; then
+            conflict=true
+            echo -e "${RED}WARNING: Network conflict detected${NC}"
+            echo -e "${YELLOW}Your current network uses: $existing_ip${NC}"
+            echo -e "${YELLOW}VPN wants to use subnet: $vpn_subnet${NC}"
+            echo ""
+            echo -e "${RED}This configuration will break your network connection${NC}"
+            echo -e "${YELLOW}Please reconfigure your VPS to use a different subnet${NC}"
+            echo -e "${CYAN}Suggested: Use 10.8.0.0/24 or 10.9.0.0/24 instead${NC}"
+            log_message "ERROR: Network conflict - existing IP $existing_ip conflicts with VPN subnet $vpn_subnet"
+            cleanup_on_failure
+        fi
+    done <<< "$existing_ips"
+    
+    if [ "$conflict" = false ]; then
+        echo -e "${GREEN}No network conflicts detected${NC}"
+        log_message "No network conflicts detected"
     fi
     
     mkdir -p /etc/wireguard
     
-    # Different config based on OS - Arch doesn't play nice with DNS in WireGuard
     if [ "$OS_TYPE" = "arch" ]; then
         cat > /etc/wireguard/wg0.conf << EOF
 [Interface]
@@ -328,11 +451,10 @@ Table = off
 [Peer]
 PublicKey = $WG_SERVER_PUBLIC_KEY
 Endpoint = $WG_ENDPOINT
-AllowedIPs = 10.5.5.0/24
+AllowedIPs = $vpn_subnet
 PersistentKeepalive = 25
 EOF
     else
-        # Debian can handle DNS in WireGuard config
         cat > /etc/wireguard/wg0.conf << EOF
 [Interface]
 PrivateKey = $WG_PRIVATE_KEY
@@ -343,99 +465,127 @@ DNS = 1.1.1.1, 8.8.8.8
 [Peer]
 PublicKey = $WG_SERVER_PUBLIC_KEY
 Endpoint = $WG_ENDPOINT
-AllowedIPs = 10.5.5.0/24
+AllowedIPs = $vpn_subnet
 PersistentKeepalive = 25
 EOF
     fi
 
     chmod 600 /etc/wireguard/wg0.conf
+    log_message "WireGuard config created with AllowedIPs=$vpn_subnet"
     
-    # Enable and start WireGuard
-    systemctl enable wg-quick@wg0 || {
+    echo -e "${GREEN}WireGuard configured${NC}"
+    echo -e "${CYAN}  VPN subnet: $vpn_subnet${NC}"
+    echo -e "${CYAN}  Client IP: $WG_CLIENT_IP${NC}"
+    echo -e "${CYAN}  Server IP: $WG_INTERNAL_IP${NC}"
+    
+    systemctl enable wg-quick@wg0 >> "$INSTALL_LOG" 2>&1 || {
         echo -e "${RED}Failed to enable WireGuard${NC}"
-        exit 1
+        log_message "ERROR: Failed to enable WireGuard"
+        cleanup_on_failure
     }
     
-    systemctl start wg-quick@wg0 || {
+    if ! systemctl start wg-quick@wg0 >> "$INSTALL_LOG" 2>&1; then
         echo -e "${RED}Failed to start WireGuard${NC}"
         echo -e "${YELLOW}This might be a DNS conflict - checking...${NC}"
-        
-        # Show helpful error message
         systemctl status wg-quick@wg0 --no-pager -l
-        
-        # Don't exit - let user decide
         echo -e "${YELLOW}WireGuard failed to start, but continuing installation...${NC}"
         echo -e "${YELLOW}You may need to fix DNS issues manually${NC}"
         echo -e "${CYAN}Try: sudo resolvconf -u${NC}"
+        log_message "WARNING: WireGuard failed to start"
         return 1
-    }
+    fi
     
-    # Test connection
     echo -e "${BLUE}Testing VPN connection...${NC}"
     sleep 3
     
     if timeout 10 ping -c 3 -W 2 "$WG_INTERNAL_IP" &>/dev/null; then
-        echo -e "${GREEN}✓ VPS backbone connection established${NC}"
+        echo -e "${GREEN}VPS backbone connection established${NC}"
+        log_message "VPN connection successful"
     else
-        echo -e "${YELLOW}⚠ Cannot reach VPS server (may still work)${NC}"
+        echo -e "${YELLOW}Cannot reach VPS server (may still work)${NC}"
+        log_message "WARNING: Cannot ping VPS server"
     fi
 }
 
 install_python_packages() {
     local packages=("$@")
+    local failed_packages=()
     
     echo -e "${BLUE}Installing Python packages...${NC}"
+    log_message "Installing Python packages"
     
     for package in "${packages[@]}"; do
         echo -e "${PURPLE}Installing: $package${NC}"
+        log_message "Installing Python package: $package"
         
         local success=false
+        local install_output=""
         
         if [ "$OS_TYPE" = "arch" ]; then
-            if python -m pip install --break-system-packages --upgrade "$package" &>/dev/null; then
+            if install_output=$(python -m pip install --break-system-packages --upgrade "$package" 2>&1); then
                 success=true
-            elif sudo -u "$TARGET_USER" env HOME="$USER_HOME" python -m pip install --user --upgrade "$package" &>/dev/null; then
+                echo -e "${GREEN}Installed: $package (system-wide)${NC}"
+                log_message "SUCCESS: $package (system-wide)"
+            elif install_output=$(sudo -u "$TARGET_USER" env HOME="$USER_HOME" python -m pip install --user --upgrade "$package" 2>&1); then
                 success=true
+                echo -e "${GREEN}Installed: $package (user)${NC}"
+                log_message "SUCCESS: $package (user)"
             fi
         else
-            if sudo -u "$TARGET_USER" python3 -m pip install --user --break-system-packages --upgrade "$package" &>/dev/null; then
+            if install_output=$(sudo -u "$TARGET_USER" python3 -m pip install --user --break-system-packages --upgrade "$package" 2>&1); then
                 success=true
+                echo -e "${GREEN}Installed: $package${NC}"
+                log_message "SUCCESS: $package"
             fi
         fi
         
-        if [ "$success" = true ]; then
-            echo -e "${GREEN}✓ $package${NC}"
-        else
+        if [ "$success" = false ]; then
             local base_package=$(echo "$package" | cut -d'>' -f1 | cut -d'<' -f1 | cut -d'=' -f1)
             echo -e "${YELLOW}Retrying with base package: $base_package${NC}"
+            log_message "Retrying with base package: $base_package"
             
             if [ "$OS_TYPE" = "arch" ]; then
-                if python -m pip install --break-system-packages --upgrade "$base_package" &>/dev/null; then
+                if install_output=$(python -m pip install --break-system-packages --upgrade "$base_package" 2>&1); then
                     success=true
-                elif sudo -u "$TARGET_USER" env HOME="$USER_HOME" python -m pip install --user --upgrade "$base_package" &>/dev/null; then
+                    echo -e "${GREEN}Installed: $base_package (system-wide)${NC}"
+                    log_message "SUCCESS: $base_package (system-wide)"
+                elif install_output=$(sudo -u "$TARGET_USER" env HOME="$USER_HOME" python -m pip install --user --upgrade "$base_package" 2>&1); then
                     success=true
+                    echo -e "${GREEN}Installed: $base_package (user)${NC}"
+                    log_message "SUCCESS: $base_package (user)"
                 fi
             else
-                if sudo -u "$TARGET_USER" python3 -m pip install --user --break-system-packages --upgrade "$base_package" &>/dev/null; then
+                if install_output=$(sudo -u "$TARGET_USER" python3 -m pip install --user --break-system-packages --upgrade "$base_package" 2>&1); then
                     success=true
+                    echo -e "${GREEN}Installed: $base_package${NC}"
+                    log_message "SUCCESS: $base_package"
                 fi
             fi
             
-            if [ "$success" = true ]; then
-                echo -e "${GREEN}✓ $base_package${NC}"
-            else
-                echo -e "${YELLOW}⚠ $package (may already be installed)${NC}"
+            if [ "$success" = false ]; then
+                echo -e "${RED}Failed: $package${NC}"
+                echo "$install_output" | tail -n 5
+                log_message "ERROR: Failed to install $package"
+                echo "$install_output" >> "$INSTALL_LOG"
+                failed_packages+=("$package")
             fi
         fi
     done
     
-    echo -e "${GREEN}Python packages installation complete${NC}"
+    if [ ${#failed_packages[@]} -gt 0 ]; then
+        echo -e "${RED}Failed to install packages: ${failed_packages[*]}${NC}"
+        echo -e "${YELLOW}Check log: $INSTALL_LOG${NC}"
+        log_message "ERROR: Failed packages: ${failed_packages[*]}"
+        cleanup_on_failure
+    fi
     
-    # Create executable wrappers for Arch (pip doesn't install scripts with --break-system-packages)
+    echo -e "${GREEN}Python packages installation complete${NC}"
+    log_message "Python packages installed successfully"
+    
     if [ "$OS_TYPE" = "arch" ]; then
         echo -e "${BLUE}Creating RNS executable wrappers...${NC}"
+        log_message "Creating Arch wrappers"
         
-        # rnsd
         cat > /usr/local/bin/rnsd << 'EOF'
 #!/usr/bin/env python
 import sys
@@ -445,7 +595,6 @@ if __name__ == '__main__':
 EOF
         chmod +x /usr/local/bin/rnsd
         
-        # rnstatus  
         cat > /usr/local/bin/rnstatus << 'EOF'
 #!/usr/bin/env python
 import sys
@@ -455,7 +604,6 @@ if __name__ == '__main__':
 EOF
         chmod +x /usr/local/bin/rnstatus
         
-        # rnpath
         cat > /usr/local/bin/rnpath << 'EOF'
 #!/usr/bin/env python
 import sys
@@ -465,7 +613,6 @@ if __name__ == '__main__':
 EOF
         chmod +x /usr/local/bin/rnpath
         
-        # rnprobe
         cat > /usr/local/bin/rnprobe << 'EOF'
 #!/usr/bin/env python
 import sys
@@ -475,7 +622,6 @@ if __name__ == '__main__':
 EOF
         chmod +x /usr/local/bin/rnprobe
         
-        # rncp
         cat > /usr/local/bin/rncp << 'EOF'
 #!/usr/bin/env python
 import sys
@@ -485,7 +631,6 @@ if __name__ == '__main__':
 EOF
         chmod +x /usr/local/bin/rncp
         
-        # rnodeconf
         cat > /usr/local/bin/rnodeconf << 'EOF'
 #!/usr/bin/env python
 import sys
@@ -495,7 +640,6 @@ if __name__ == '__main__':
 EOF
         chmod +x /usr/local/bin/rnodeconf
         
-        # nomadnet
         cat > /usr/local/bin/nomadnet << 'EOF'
 #!/usr/bin/env python
 import sys
@@ -506,82 +650,108 @@ EOF
         chmod +x /usr/local/bin/nomadnet
         
         echo -e "${GREEN}RNS wrappers created in /usr/local/bin${NC}"
+        log_message "Arch wrappers created"
     fi
     
-    # Detect binary paths
     echo -e "${BLUE}Detecting Reticulum binaries...${NC}"
     
     RNS_BIN=$(which rnsd 2>/dev/null || echo "/usr/local/bin/rnsd")
     NOMADNET_BIN=$(which nomadnet 2>/dev/null || echo "/usr/local/bin/nomadnet")
     
-    # Verify binaries exist
     if [ ! -f "$RNS_BIN" ]; then
         echo -e "${RED}ERROR: rnsd binary not found at $RNS_BIN${NC}"
-        exit 1
+        log_message "ERROR: rnsd binary not found"
+        cleanup_on_failure
     fi
     
     echo -e "${GREEN}RNS: $RNS_BIN${NC}"
     echo -e "${GREEN}Nomadnet: $NOMADNET_BIN${NC}"
+    log_message "Binaries located: RNS=$RNS_BIN, Nomadnet=$NOMADNET_BIN"
 }
 
 clone_and_build_repo() {
     echo -e "${BLUE}Installing MeshChat web interface...${NC}"
+    log_message "Cloning MeshChat repository"
     
     if [ -d "$INSTALL_DIR" ]; then
         echo -e "${YELLOW}Removing old installation${NC}"
         rm -rf "$INSTALL_DIR"
+        log_message "Removed old MeshChat installation"
     fi
     
-    # Clone repo
     local retry=0
     while [ $retry -lt 3 ]; do
-        if git clone "$REPO" "$INSTALL_DIR" 2>/dev/null; then
+        if git clone --branch "$MESHCHAT_BRANCH" "$MESHCHAT_REPO" "$INSTALL_DIR" >> "$INSTALL_LOG" 2>&1; then
+            MESHCHAT_CLONED=true
+            log_message "MeshChat cloned successfully"
             break
         fi
         retry=$((retry + 1))
         if [ $retry -lt 3 ]; then
             echo -e "${YELLOW}Clone failed, retry $retry/3...${NC}"
+            log_message "Clone retry $retry/3"
             sleep 3
         else
             echo -e "${RED}Failed to clone repository${NC}"
-            exit 1
+            echo -e "${YELLOW}Check log: $INSTALL_LOG${NC}"
+            log_message "ERROR: Failed to clone MeshChat after 3 attempts"
+            cleanup_on_failure
         fi
     done
     
     cd "$INSTALL_DIR" || {
         echo -e "${RED}Failed to enter repository directory${NC}"
-        exit 1
+        log_message "ERROR: Cannot cd to $INSTALL_DIR"
+        cleanup_on_failure
     }
     
     mkdir -p public
     
-    echo -e "${PURPLE}Installing Node.js dependencies...${NC}"
-    npm install --omit=dev || {
-        echo -e "${RED}Failed to install Node dependencies${NC}"
-        exit 1
-    }
+    echo -e "${PURPLE}Installing Node.js dependencies (this may take 2-3 minutes)...${NC}"
+    log_message "Installing Node.js dependencies"
     
-    echo -e "${PURPLE}Building frontend...${NC}"
-    npm run build-frontend || {
+    if ! npm install --omit=dev >> "$INSTALL_LOG" 2>&1; then
+        echo -e "${RED}Failed to install Node dependencies${NC}"
+        echo -e "${YELLOW}Common causes:${NC}"
+        echo "  - Node.js version incompatibility (needs v16+)"
+        echo "  - npm cache corruption"
+        echo "  - Insufficient disk space"
+        echo -e "${CYAN}Build log: $INSTALL_LOG${NC}"
+        echo -e "${CYAN}Try: npm cache clean --force${NC}"
+        log_message "ERROR: npm install failed"
+        cleanup_on_failure
+    fi
+    
+    echo -e "${PURPLE}Building frontend (this may take 2-3 minutes)...${NC}"
+    log_message "Building MeshChat frontend"
+    
+    if ! npm run build-frontend >> "$INSTALL_LOG" 2>&1; then
         echo -e "${RED}Failed to build frontend${NC}"
-        exit 1
-    }
+        echo -e "${YELLOW}Common causes:${NC}"
+        echo "  - Node.js version incompatibility"
+        echo "  - Build dependencies missing"
+        echo "  - Insufficient memory"
+        echo -e "${CYAN}Build log: $INSTALL_LOG${NC}"
+        log_message "ERROR: npm run build-frontend failed"
+        cleanup_on_failure
+    fi
     
     chown -R "$TARGET_USER:$TARGET_USER" "$INSTALL_DIR"
     
     echo -e "${GREEN}MeshChat installed${NC}"
+    log_message "MeshChat installation complete"
 }
 
 configure_reticulum() {
     echo -e "${BLUE}Configuring Reticulum...${NC}"
+    log_message "Configuring Reticulum"
     
     local config_dir="$USER_HOME/.reticulum"
     local config_file="$config_dir/config"
     
     mkdir -p "$config_dir"
     
-    if [[ "$KAIROS_ACCESS" =~ ^[Yy]$ ]]; then
-        # VPS backbone mode: VPS + local mesh
+    if [[ "$VPS_BACKBONE" =~ ^[Yy]$ ]]; then
         cat > "$config_file" << EOF
 [reticulum]
 enable_transport = yes
@@ -605,7 +775,7 @@ loglevel = 3
     type = AutoInterface
     interface_enabled = yes
 
-  # RNode support (commented out - enable if you have LoRa hardware!!!)
+  # RNode support (commented out - enable if you have LoRa hardware)
   # [[RNode Interface]]
   #   type = RNodeInterface
   #   interface_enabled = no
@@ -618,8 +788,8 @@ loglevel = 3
 
 EOF
         echo -e "${GREEN}Config: VPS backbone + local mesh${NC}"
+        log_message "Reticulum configured for VPS backbone mode"
     else
-        # Local only mode
         cat > "$config_file" << EOF
 [reticulum]
 enable_transport = yes
@@ -636,7 +806,7 @@ loglevel = 3
     type = AutoInterface
     interface_enabled = yes
 
-  # RNode support (commented out - enable if you have LoRa hardware!!!)
+  # RNode support (commented out - enable if you have LoRa hardware)
   # [[RNode Interface]]
   #   type = RNodeInterface
   #   interface_enabled = no
@@ -649,6 +819,7 @@ loglevel = 3
 
 EOF
         echo -e "${GREEN}Config: Local mesh only${NC}"
+        log_message "Reticulum configured for local mesh only"
     fi
     
     chown -R "$TARGET_USER:$TARGET_USER" "$config_dir"
@@ -656,6 +827,7 @@ EOF
 
 create_rnode_detector() {
     echo -e "${BLUE}Creating RNode detection script...${NC}"
+    log_message "Creating RNode detector"
     
     cat > /usr/local/bin/detect-rnodes.sh << 'EOF'
 #!/bin/bash
@@ -674,7 +846,7 @@ for device in /dev/ttyUSB* /dev/ttyACM*; do
             sed -i 's|interface_enabled = no|interface_enabled = yes|g' ~/.reticulum/config
             
             echo "RNode configured"
-            systemctl --user restart reticulum 2>/dev/null || true
+            systemctl --user restart reticulum 2>/dev/null || sudo systemctl restart reticulum
             break
         fi
     fi
@@ -685,10 +857,12 @@ EOF
     
     chmod +x /usr/local/bin/detect-rnodes.sh
     echo -e "${GREEN}RNode detector: /usr/local/bin/detect-rnodes.sh${NC}"
+    log_message "RNode detector created"
 }
 
 create_serial_udev_rules() {
     echo -e "${BLUE}Creating udev rules for serial devices...${NC}"
+    log_message "Creating udev rules"
     
     cat > /etc/udev/rules.d/99-serial-permissions.rules << 'EOF'
 # Serial device permissions for LoRa radios
@@ -700,15 +874,14 @@ EOF
     udevadm control --reload-rules 2>/dev/null || true
     udevadm trigger 2>/dev/null || true
 
-    # Add user to dialout group for serial device access
     usermod -a -G dialout "$TARGET_USER" 2>/dev/null || true
     
-    # On Arch, also add to uucp group (common for serial devices)
     if [ "$OS_TYPE" = "arch" ]; then
         usermod -a -G uucp "$TARGET_USER" 2>/dev/null || true
     fi
     
     echo -e "${GREEN}Udev rules created${NC}"
+    log_message "Udev rules created and user added to groups"
 }
 
 wait_for_service() {
@@ -727,8 +900,8 @@ wait_for_service() {
 
 create_systemd_services() {
     echo -e "${BLUE}Creating systemd services...${NC}"
+    log_message "Creating systemd services"
     
-    # Reticulum service - no --config flag needed (rnsd uses ~/.reticulum/config by default)
     cat > /etc/systemd/system/reticulum.service << EOF
 [Unit]
 Description=Reticulum Network Stack
@@ -750,7 +923,6 @@ Environment="PATH=$USER_HOME/.local/bin:/usr/local/bin:/usr/bin:/bin"
 WantedBy=multi-user.target
 EOF
 
-    # MeshChat service
     cat > /etc/systemd/system/meshchat.service << EOF
 [Unit]
 Description=Reticulum MeshChat
@@ -773,79 +945,92 @@ WantedBy=multi-user.target
 EOF
 
     systemctl daemon-reload
+    SERVICES_CREATED=true
     
     echo -e "${GREEN}Services created${NC}"
+    log_message "Systemd services created"
 }
 
 start_services() {
     echo -e "${BLUE}Starting services...${NC}"
+    log_message "Starting services"
     
     systemctl enable reticulum.service || {
         echo -e "${RED}Failed to enable Reticulum${NC}"
-        exit 1
+        log_message "ERROR: Failed to enable reticulum.service"
+        cleanup_on_failure
     }
     
     systemctl enable meshchat.service || {
         echo -e "${RED}Failed to enable MeshChat${NC}"
-        exit 1
+        log_message "ERROR: Failed to enable meshchat.service"
+        cleanup_on_failure
     }
     
     systemctl start reticulum.service || {
         echo -e "${RED}Failed to start Reticulum${NC}"
         journalctl -u reticulum.service --no-pager -n 20
-        exit 1
+        log_message "ERROR: Failed to start reticulum.service"
+        cleanup_on_failure
     }
     
     if ! wait_for_service "reticulum.service"; then
         echo -e "${RED}Reticulum failed to start${NC}"
         journalctl -u reticulum.service --no-pager -n 20
-        exit 1
+        log_message "ERROR: Reticulum service did not become active"
+        cleanup_on_failure
     fi
     
     systemctl start meshchat.service || {
         echo -e "${RED}Failed to start MeshChat${NC}"
         journalctl -u meshchat.service --no-pager -n 20
-        exit 1
+        log_message "ERROR: Failed to start meshchat.service"
+        cleanup_on_failure
     }
     
     if ! wait_for_service "meshchat.service"; then
         echo -e "${RED}MeshChat failed to start${NC}"
         journalctl -u meshchat.service --no-pager -n 20
-        exit 1
+        log_message "ERROR: MeshChat service did not become active"
+        cleanup_on_failure
     fi
     
     echo -e "${GREEN}Services started${NC}"
+    log_message "Services started successfully"
 }
 
 check_service_status() {
     echo -e "${BLUE}Service status:${NC}"
+    log_message "Checking service status"
     
     local services=("reticulum" "meshchat")
-    if [[ "$KAIROS_ACCESS" =~ ^[Yy]$ ]]; then
+    if [[ "$VPS_BACKBONE" =~ ^[Yy]$ ]]; then
         services+=("wg-quick@wg0")
     fi
     
     for service in "${services[@]}"; do
         if systemctl is-active --quiet "$service.service" || systemctl is-active --quiet "$service"; then
-            echo -e "${GREEN}✓ $service${NC}"
+            echo -e "${GREEN}Active: $service${NC}"
+            log_message "Service active: $service"
         else
-            echo -e "${RED}✗ $service${NC}"
+            echo -e "${RED}Inactive: $service${NC}"
+            log_message "Service inactive: $service"
         fi
     done
 }
 
 create_desktop_shortcuts() {
-    # Check if desktop environment exists
     if [ ! -d "$USER_HOME/Desktop" ] && [ -z "$DISPLAY" ]; then
         echo -e "${CYAN}No desktop environment detected - skipping shortcuts${NC}"
+        log_message "No desktop environment, skipping shortcuts"
         return 0
     fi
     
     echo -e "${BLUE}Creating desktop shortcuts...${NC}"
+    log_message "Creating desktop shortcuts"
     
     mkdir -p "$USER_HOME/Desktop"
     
-    # MeshChat shortcut
     cat > "$USER_HOME/Desktop/meshchat.desktop" << EOF
 [Desktop Entry]
 Version=1.0
@@ -856,7 +1041,6 @@ Icon=network-workgroup
 Terminal=false
 EOF
 
-    # Nomadnet shortcut
     cat > "$USER_HOME/Desktop/nomadnet.desktop" << EOF
 [Desktop Entry]
 Version=1.0
@@ -871,30 +1055,17 @@ EOF
     chown -R "$TARGET_USER:$TARGET_USER" "$USER_HOME/Desktop"
     
     echo -e "${GREEN}Desktop shortcuts created${NC}"
-}
-
-install_kairosctl() {
-    echo -e "${BLUE}Installing management tool...${NC}"
-    
-    curl -fsSL https://raw.githubusercontent.com/jackcox15/Kairos/main/rns_PC/kairosctl.sh -o /usr/local/bin/kairosctl || {
-        echo -e "${RED}Failed to download kairosctl${NC}"
-        return 1
-    }
-    
-    chmod +x /usr/local/bin/kairosctl
-    
-    echo -e "${GREEN}kairosctl installed${NC}"
-    echo -e "${BLUE}  Run 'kairosctl' to manage your mesh node${NC}"
+    log_message "Desktop shortcuts created"
 }
 
 print_completion() {
     echo ""
-    echo -e "${GREEN}════════════════════════════════════════${NC}"
-    echo -e "${GREEN}     Installation Complete!${NC}"
-    echo -e "${GREEN}════════════════════════════════════════${NC}"
+    echo -e "${GREEN}========================================${NC}"
+    echo -e "${GREEN}     Installation Complete${NC}"
+    echo -e "${GREEN}========================================${NC}"
     echo ""
     
-    if [[ "$KAIROS_ACCESS" =~ ^[Yy]$ ]]; then
+    if [[ "$VPS_BACKBONE" =~ ^[Yy]$ ]]; then
         echo -e "${CYAN}Mode: VPS Backbone + Local Mesh${NC}"
         echo -e "${BLUE}   Connected to your VPS backbone via VPN${NC}"
         echo -e "${BLUE}   Local mesh discovery enabled${NC}"
@@ -917,10 +1088,10 @@ print_completion() {
     echo -e "${BLUE}  Restart: sudo systemctl restart reticulum${NC}"
     
     echo ""
-    echo -e "${PURPLE}Config:${NC}"
+    echo -e "${PURPLE}Configuration:${NC}"
     echo -e "${BLUE}  Reticulum: ~/.reticulum/config${NC}"
     echo -e "${BLUE}  RNode detection: /usr/local/bin/detect-rnodes.sh${NC}"
-    echo -e "${BLUE}  Run: 'kairosctl' in the console to manage Reticulum!${NC}"
+    echo -e "${BLUE}  Installation log: $INSTALL_LOG${NC}"
     
     if [ "$OS_TYPE" = "arch" ]; then
         echo ""
@@ -929,105 +1100,95 @@ print_completion() {
     fi
     
     echo ""
-    echo -e "${GREEN}Happy meshing! <3 ${NC}"
+    echo -e "${GREEN}Happy meshing${NC}"
     echo ""
+    
+    log_message "Installation completed successfully"
 }
 
 #############################
 ### Main Script
 #############################
 
-echo -e "${PURPLE}════════════════════════════════════════${NC}"
+echo -e "${PURPLE}========================================${NC}"
 echo -e "${PURPLE}   Reticulum Network Installer${NC}"
-echo -e "${PURPLE}════════════════════════════════════════${NC}"
+echo -e "${PURPLE}========================================${NC}"
 echo ""
 
-# Root check
+log_message "Installation started"
+INSTALLATION_STARTED=true
+
+trap cleanup_on_failure ERR
+
 if [ "$EUID" -ne 0 ]; then
     echo -e "${RED}Please run with sudo${NC}"
+    log_message "ERROR: Not run as root"
     exit 1
 fi
 
-# Detect OS
-echo -e "${PURPLE}[1/15] Detecting OS...${NC}"
+echo -e "${PURPLE}[1/16] Detecting OS...${NC}"
 detect_os
 
-# Ask about VPS backbone
-ask_kairos_access
+echo -e "${PURPLE}[2/16] Checking disk space...${NC}"
+check_disk_space
 
-# Build package list based on OS and user choice
+ask_vps_backbone
+
 if [ "$OS_TYPE" = "debian" ]; then
     FINAL_PACKAGES=("${DEBIAN_PACKAGES[@]}")
-    if [[ "$KAIROS_ACCESS" =~ ^[Yy]$ ]]; then
-        FINAL_PACKAGES+=("${DEBIAN_KAIROS_PACKAGES[@]}")
+    if [[ "$VPS_BACKBONE" =~ ^[Yy]$ ]]; then
+        FINAL_PACKAGES+=("${DEBIAN_VPS_PACKAGES[@]}")
     fi
     if [ -n "$DISPLAY" ] || [ -d "$USER_HOME/Desktop" ]; then
         FINAL_PACKAGES+=("${DEBIAN_DESKTOP_PACKAGES[@]}")
     fi
 else
     FINAL_PACKAGES=("${ARCH_PACKAGES[@]}")
-    if [[ "$KAIROS_ACCESS" =~ ^[Yy]$ ]]; then
-        FINAL_PACKAGES+=("${ARCH_KAIROS_PACKAGES[@]}")
+    if [[ "$VPS_BACKBONE" =~ ^[Yy]$ ]]; then
+        FINAL_PACKAGES+=("${ARCH_VPS_PACKAGES[@]}")
     fi
     if [ -n "$DISPLAY" ] || [ -d "$USER_HOME/Desktop" ]; then
         FINAL_PACKAGES+=("${ARCH_DESKTOP_PACKAGES[@]}")
     fi
 fi
 
-# Detect binaries
-echo -e "${PURPLE}[2/15] Detecting binaries...${NC}"
+echo -e "${PURPLE}[3/16] Detecting binaries...${NC}"
 detect_binary_paths
 
-# Install system packages
-echo -e "${PURPLE}[3/15] Installing system packages...${NC}"
+echo -e "${PURPLE}[4/16] Installing system packages...${NC}"
 install_system_packages "${FINAL_PACKAGES[@]}"
 
-# Bootstrap pip
-echo -e "${PURPLE}[4/15] Checking pip...${NC}"
+echo -e "${PURPLE}[5/16] Checking pip...${NC}"
 bootstrap_pip
 
-# Install Python packages
-echo -e "${PURPLE}[6/15] Installing Python packages...${NC}"
+echo -e "${PURPLE}[6/16] Installing Python packages...${NC}"
 install_python_packages "${PYTHON_PACKAGES[@]}"
 
-# Clone and build MeshChat
-echo -e "${PURPLE}[7/15] Installing MeshChat...${NC}"
+echo -e "${PURPLE}[7/16] Installing MeshChat...${NC}"
 clone_and_build_repo
 
-# Configure Reticulum
-echo -e "${PURPLE}[8/15] Configuring Reticulum...${NC}"
+echo -e "${PURPLE}[8/16] Configuring Reticulum...${NC}"
 configure_reticulum
 
-# Create utility scripts
-echo -e "${PURPLE}[9/15] Creating utility scripts...${NC}"
+echo -e "${PURPLE}[9/16] Creating utility scripts...${NC}"
 create_rnode_detector
 create_serial_udev_rules
 
-# Create systemd services
-echo -e "${PURPLE}[10/15] Creating services...${NC}"
+echo -e "${PURPLE}[10/16] Creating services...${NC}"
 create_systemd_services
 
-# Create desktop shortcuts
-echo -e "${PURPLE}[11/15] Creating shortcuts...${NC}"
+echo -e "${PURPLE}[11/16] Creating shortcuts...${NC}"
 create_desktop_shortcuts
 
-# Start services
-echo -e "${PURPLE}[12/15] Starting services...${NC}"
+echo -e "${PURPLE}[12/16] Starting services...${NC}"
 start_services
 
-# Install kairosctl
-echo -e "${PURPLE}[13/15] Installing management tool...${NC}"
-install_kairosctl
-
-# Setup WireGuard (if VPS backbone enabled)
-echo -e "${PURPLE}[14/15] Network setup...${NC}"
+echo -e "${PURPLE}[13/16] Network setup...${NC}"
 setup_wireguard
 
-# Check status
-echo -e "${PURPLE}[15/15] Checking status...${NC}"
+echo -e "${PURPLE}[14/16] Checking status...${NC}"
 check_service_status
 
-# Print completion info
 print_completion
 
 exit 0
