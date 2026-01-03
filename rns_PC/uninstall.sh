@@ -5,7 +5,7 @@ set -e
 
 echo "═════════════════════════════════════════"
 echo "            CLEANUP SCRIPT"
-echo═══════════════════════════════════════════"
+echo "═════════════════════════════════════════"
 echo ""
 echo "This will DELETE:"
 echo "  • All  services (Reticulum, MeshChat)"

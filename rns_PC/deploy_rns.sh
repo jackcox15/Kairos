@@ -17,16 +17,19 @@ NC='\033[0m'
 
 # Port Configuration:
 ### RETICULUM_PORT (4242): TCP port Reticulum listens on for VPS backbone 
-### OR whichever port you have specified. you may need to update ~/.reticulum/config 
+### OR whichever port you have specified. you may need to update ~/.reticulum/config
+### depending on how your network is configured. It is recommended that you checkout
+### reticulum documentation 
 
 ### MESHCHAT_PORT (8000): Local web UI port for MeshChat on each node
-#   This is always localhost only, not exposed to network
+### MESHCHAT_HOST: Binding address for MeshChat (127.0.0.1 for local only, 0.0.0.0 for network access)
 
 ### WireGuard (51820): VPN tunnel port, configured separately in WireGuard config
-### Change if needed 
+### Change if needed for your setup
 
-RETICULUM_PORT=4242  # TCP port for Reticulum on VPS backbone
-MESHCHAT_PORT=8000   # MeshChat web UI (localhost only, not used in config)
+RETICULUM_PORT=4242  # TCP port for Reticulum
+MESHCHAT_PORT=8000   # MeshChat web UI port
+MESHCHAT_HOST=""     # Will be set by user selection (127.0.0.1 or 0.0.0.0)
 MESHCHAT_REPO="${MESHCHAT_REPO:-https://github.com/liamcottle/reticulum-meshchat}"
 MESHCHAT_BRANCH="${MESHCHAT_BRANCH:-master}"
 INSTALL_DIR="/opt/reticulum-meshchat"
@@ -34,6 +37,11 @@ INSTALL_LOG="/tmp/rns_install_$(date +%Y%m%d_%H%M%S).log"
 
 # OS detection variable
 OS_TYPE=""
+
+# Environment detection
+IS_VM=false
+IS_CONTAINER=false
+VIRT_TYPE=""
 
 # Get user who ran sudo, avoids installing everything in root
 if [ -n "$SUDO_USER" ]; then
@@ -164,6 +172,33 @@ cleanup_on_failure() {
     echo -e "${YELLOW}Review the log for details about the failure${NC}"
     
     exit 1
+}
+
+detect_virtualization() {
+    echo -e "${BLUE}Detecting environment...${NC}"
+    log_message "Detecting virtualization environment"
+    
+    if command -v systemd-detect-virt &>/dev/null; then
+        VIRT_TYPE=$(systemd-detect-virt 2>/dev/null)
+        
+        if [ "$VIRT_TYPE" != "none" ]; then
+            if [ "$VIRT_TYPE" = "container" ] || [ "$VIRT_TYPE" = "docker" ] || [ "$VIRT_TYPE" = "lxc" ]; then
+                IS_CONTAINER=true
+                echo -e "${CYAN}Container detected: $VIRT_TYPE${NC}"
+                log_message "Container environment: $VIRT_TYPE"
+            else
+                IS_VM=true
+                echo -e "${CYAN}Virtual machine detected: $VIRT_TYPE${NC}"
+                log_message "VM environment: $VIRT_TYPE"
+            fi
+        else
+            echo -e "${CYAN}Bare metal installation${NC}"
+            log_message "Bare metal installation"
+        fi
+    else
+        echo -e "${YELLOW}Cannot detect virtualization (systemd-detect-virt not available)${NC}"
+        log_message "Virtualization detection unavailable"
+    fi
 }
 
 detect_os() {
@@ -353,6 +388,52 @@ ask_vps_backbone() {
     fi
 }
 
+ask_meshchat_binding() {
+    echo ""
+    echo -e "${CYAN}========================================${NC}"
+    echo -e "${CYAN}      MeshChat Network Access${NC}"     
+    echo -e "${CYAN}========================================${NC}"
+    echo ""
+    
+    if [ "$IS_VM" = true ] || [ "$IS_CONTAINER" = true ]; then
+        echo -e "${YELLOW}VM or container detected${NC}"
+        echo -e "${YELLOW}If you want to access MeshChat from your host machine,${NC}"
+        echo -e "${YELLOW}you need to bind to all network interfaces.${NC}"
+        echo ""
+    fi
+    
+    echo -e "${BLUE}Where will you access MeshChat from?${NC}"
+    echo -e "  ${CYAN}1${NC} - This machine only (localhost) - More secure"
+    echo -e "  ${CYAN}2${NC} - Network access (other devices, VMs, containers) - Less secure"
+    echo ""
+    echo -e "${BLUE}Select option [1-2]:${NC}"
+    read -r meshchat_choice
+    echo ""
+    
+    case "$meshchat_choice" in
+        1)
+            MESHCHAT_HOST="127.0.0.1"
+            echo -e "${GREEN}MeshChat will be accessible on localhost only${NC}"
+            echo -e "${BLUE}Access at: http://localhost:8000${NC}"
+            log_message "MeshChat binding: localhost only"
+            ;;
+        2)
+            MESHCHAT_HOST="0.0.0.0"
+            echo -e "${GREEN}MeshChat will be accessible on your network${NC}"
+            echo -e "${YELLOW}WARNING: This makes MeshChat accessible to anyone on your network${NC}"
+            echo -e "${YELLOW}Consider using a firewall or SSH tunnel for security${NC}"
+            log_message "MeshChat binding: all interfaces"
+            ;;
+        *)
+            echo -e "${YELLOW}Invalid selection, defaulting to localhost only${NC}"
+            MESHCHAT_HOST="127.0.0.1"
+            log_message "MeshChat binding: localhost (default)"
+            ;;
+    esac
+    
+    echo ""
+}
+
 validate_wg_key() {
     local key="$1"
     local key_name="$2"
@@ -509,12 +590,39 @@ EOF
     fi
 }
 
+ensure_user_path() {
+    echo -e "${BLUE}Configuring PATH for $TARGET_USER...${NC}"
+    log_message "Ensuring ~/.local/bin is in PATH"
+    
+    # Ensure ~/.local/bin exists
+    if [ ! -d "$USER_HOME/.local/bin" ]; then
+        mkdir -p "$USER_HOME/.local/bin"
+        chown "$TARGET_USER:$TARGET_USER" "$USER_HOME/.local/bin"
+        log_message "Created ~/.local/bin directory"
+    fi
+    
+    # Add to .bashrc if not already there
+    if [ -f "$USER_HOME/.bashrc" ]; then
+        if ! grep -q '.local/bin' "$USER_HOME/.bashrc" 2>/dev/null; then
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$USER_HOME/.bashrc"
+            echo -e "${GREEN}Added ~/.local/bin to PATH in .bashrc${NC}"
+            log_message "Added ~/.local/bin to PATH in .bashrc"
+        fi
+    fi
+    
+    # Temporarily add to current session PATH
+    export PATH="$USER_HOME/.local/bin:/usr/local/bin:$PATH"
+    
+    log_message "PATH configuration complete"
+}
+
 install_python_packages() {
     local packages=("$@")
     local failed_packages=()
     
     echo -e "${BLUE}Installing Python packages...${NC}"
-    log_message "Installing Python packages"
+    echo -e "${YELLOW}Note: Installing system-wide with sudo to ensure binaries in /usr/local/bin${NC}"
+    log_message "Installing Python packages system-wide"
     
     for package in "${packages[@]}"; do
         echo -e "${PURPLE}Installing: $package${NC}"
@@ -523,18 +631,15 @@ install_python_packages() {
         local success=false
         local install_output=""
         
+        # Install system-wide using sudo pip to ensure binaries go to /usr/local/bin
         if [ "$OS_TYPE" = "arch" ]; then
             if install_output=$(python -m pip install --break-system-packages --upgrade "$package" 2>&1); then
                 success=true
-                echo -e "${GREEN}Installed: $package (system-wide)${NC}"
-                log_message "SUCCESS: $package (system-wide)"
-            elif install_output=$(sudo -u "$TARGET_USER" env HOME="$USER_HOME" python -m pip install --user --upgrade "$package" 2>&1); then
-                success=true
-                echo -e "${GREEN}Installed: $package (user)${NC}"
-                log_message "SUCCESS: $package (user)"
+                echo -e "${GREEN}Installed: $package${NC}"
+                log_message "SUCCESS: $package"
             fi
         else
-            if install_output=$(sudo -u "$TARGET_USER" python3 -m pip install --user --break-system-packages --upgrade "$package" 2>&1); then
+            if install_output=$(python3 -m pip install --break-system-packages --upgrade "$package" 2>&1); then
                 success=true
                 echo -e "${GREEN}Installed: $package${NC}"
                 log_message "SUCCESS: $package"
@@ -549,15 +654,11 @@ install_python_packages() {
             if [ "$OS_TYPE" = "arch" ]; then
                 if install_output=$(python -m pip install --break-system-packages --upgrade "$base_package" 2>&1); then
                     success=true
-                    echo -e "${GREEN}Installed: $base_package (system-wide)${NC}"
-                    log_message "SUCCESS: $base_package (system-wide)"
-                elif install_output=$(sudo -u "$TARGET_USER" env HOME="$USER_HOME" python -m pip install --user --upgrade "$base_package" 2>&1); then
-                    success=true
-                    echo -e "${GREEN}Installed: $base_package (user)${NC}"
-                    log_message "SUCCESS: $base_package (user)"
+                    echo -e "${GREEN}Installed: $base_package${NC}"
+                    log_message "SUCCESS: $base_package"
                 fi
             else
-                if install_output=$(sudo -u "$TARGET_USER" python3 -m pip install --user --break-system-packages --upgrade "$base_package" 2>&1); then
+                if install_output=$(python3 -m pip install --break-system-packages --upgrade "$base_package" 2>&1); then
                     success=true
                     echo -e "${GREEN}Installed: $base_package${NC}"
                     log_message "SUCCESS: $base_package"
@@ -657,13 +758,49 @@ EOF
     
     echo -e "${BLUE}Detecting Reticulum binaries...${NC}"
     
-    RNS_BIN=$(which rnsd 2>/dev/null || echo "/usr/local/bin/rnsd")
-    NOMADNET_BIN=$(which nomadnet 2>/dev/null || echo "/usr/local/bin/nomadnet")
+    # Search multiple locations for binaries
+    local search_paths="/usr/local/bin /usr/bin $USER_HOME/.local/bin /root/.local/bin"
     
-    if [ ! -f "$RNS_BIN" ]; then
-        echo -e "${RED}ERROR: rnsd binary not found at $RNS_BIN${NC}"
-        log_message "ERROR: rnsd binary not found"
+    RNS_BIN=$(command -v rnsd 2>/dev/null)
+    if [ -z "$RNS_BIN" ]; then
+        for search_dir in $search_paths; do
+            if [ -f "$search_dir/rnsd" ]; then
+                RNS_BIN="$search_dir/rnsd"
+                break
+            fi
+        done
+    fi
+    
+    NOMADNET_BIN=$(command -v nomadnet 2>/dev/null)
+    if [ -z "$NOMADNET_BIN" ]; then
+        for search_dir in $search_paths; do
+            if [ -f "$search_dir/nomadnet" ]; then
+                NOMADNET_BIN="$search_dir/nomadnet"
+                break
+            fi
+        done
+    fi
+    
+    if [ -z "$RNS_BIN" ]; then
+        echo -e "${RED}ERROR: rnsd binary not found${NC}"
+        echo ""
+        echo -e "${YELLOW}Searched locations:${NC}"
+        echo "  /usr/local/bin/rnsd"
+        echo "  /usr/bin/rnsd"
+        echo "  $USER_HOME/.local/bin/rnsd"
+        echo "  /root/.local/bin/rnsd"
+        echo ""
+        echo -e "${YELLOW}This usually means pip installed to an unexpected location${NC}"
+        echo -e "${CYAN}Try running manually: find /usr -name rnsd 2>/dev/null${NC}"
+        echo -e "${CYAN}Or check: $PYTHON_BIN -m pip show rns${NC}"
+        log_message "ERROR: rnsd binary not found in any standard location"
         cleanup_on_failure
+    fi
+    
+    if [ -z "$NOMADNET_BIN" ]; then
+        echo -e "${YELLOW}WARNING: nomadnet binary not found, setting default${NC}"
+        NOMADNET_BIN="/usr/local/bin/nomadnet"
+        log_message "WARNING: nomadnet not found, using default path"
     fi
     
     echo -e "${GREEN}RNS: $RNS_BIN${NC}"
@@ -920,6 +1057,7 @@ RestartSec=5
 StandardOutput=journal
 StandardError=journal
 Environment="PATH=$USER_HOME/.local/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="HOME=$USER_HOME"
 
 [Install]
 WantedBy=multi-user.target
@@ -935,12 +1073,13 @@ Requires=reticulum.service
 Type=simple
 User=$TARGET_USER
 WorkingDirectory=$INSTALL_DIR
-ExecStart=$PYTHON_BIN meshchat.py
+ExecStart=$PYTHON_BIN $INSTALL_DIR/meshchat.py --host $MESHCHAT_HOST --port $MESHCHAT_PORT
 Restart=always
 RestartSec=10
 StandardOutput=journal
 StandardError=journal
 Environment="PATH=$USER_HOME/.local/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="HOME=$USER_HOME"
 
 [Install]
 WantedBy=multi-user.target
@@ -951,6 +1090,7 @@ EOF
     
     echo -e "${GREEN}Services created${NC}"
     log_message "Systemd services created"
+    log_message "MeshChat configured to listen on $MESHCHAT_HOST:$MESHCHAT_PORT"
 }
 
 start_services() {
@@ -1021,6 +1161,53 @@ check_service_status() {
     done
 }
 
+verify_network_access() {
+    echo -e "${BLUE}Verifying network configuration...${NC}"
+    log_message "Verifying network access"
+    
+    sleep 2
+    
+    # Check if meshchat is actually listening
+    local binding=$(ss -tulpen 2>/dev/null | grep ":$MESHCHAT_PORT" | awk '{print $5}' | head -1)
+    
+    if [ -z "$binding" ]; then
+        echo -e "${YELLOW}WARNING: MeshChat port $MESHCHAT_PORT not detected${NC}"
+        echo -e "${YELLOW}Service may still be starting up${NC}"
+        log_message "WARNING: Port $MESHCHAT_PORT not detected"
+        return 0
+    fi
+    
+    echo -e "${GREEN}MeshChat is listening on: $binding${NC}"
+    log_message "MeshChat listening on: $binding"
+    
+    # Get network IPs
+    local network_ips=$(ip -4 addr show | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '127.0.0.1')
+    
+    echo ""
+    echo -e "${PURPLE}Access MeshChat at:${NC}"
+    echo -e "${BLUE}  http://localhost:$MESHCHAT_PORT${NC}"
+    
+    if [[ "$MESHCHAT_HOST" == "0.0.0.0" ]] && [ -n "$network_ips" ]; then
+        echo ""
+        echo -e "${BLUE}Network access enabled. Also accessible from:${NC}"
+        while IFS= read -r ip; do
+            echo -e "${BLUE}  http://$ip:$MESHCHAT_PORT${NC}"
+        done <<< "$network_ips"
+        
+        if [ "$IS_VM" = true ] || [ "$IS_CONTAINER" = true ]; then
+            echo ""
+            echo -e "${YELLOW}VM/Container detected - from your host machine use:${NC}"
+            while IFS= read -r ip; do
+                echo -e "${CYAN}  http://$ip:$MESHCHAT_PORT${NC}"
+            done <<< "$network_ips"
+            echo ""
+            echo -e "${YELLOW}Note: May require port forwarding in your hypervisor settings${NC}"
+        fi
+    fi
+    
+    echo ""
+}
+
 create_desktop_shortcuts() {
     if [ ! -d "$USER_HOME/Desktop" ] && [ -z "$DISPLAY" ]; then
         echo -e "${CYAN}No desktop environment detected - skipping shortcuts${NC}"
@@ -1038,7 +1225,7 @@ create_desktop_shortcuts() {
 Version=1.0
 Type=Application
 Name=Reticulum MeshChat
-Exec=firefox http://localhost:8000
+Exec=firefox http://localhost:$MESHCHAT_PORT
 Icon=network-workgroup
 Terminal=false
 EOF
@@ -1078,12 +1265,6 @@ print_completion() {
     fi
     
     echo ""
-    echo -e "${PURPLE}Access:${NC}"
-    echo -e "${BLUE}  MeshChat: http://localhost:8000${NC}"
-    echo -e "${BLUE}  Nomadnet: nomadnet${NC}"
-    echo -e "${BLUE}  Status: rnstatus${NC}"
-    
-    echo ""
     echo -e "${PURPLE}Service Management:${NC}"
     echo -e "${BLUE}  Status: sudo systemctl status reticulum meshchat${NC}"
     echo -e "${BLUE}  Logs: sudo journalctl -u reticulum -f${NC}"
@@ -1099,6 +1280,15 @@ print_completion() {
         echo ""
         echo -e "${YELLOW}Note: On Arch, you may need to log out and back in for group${NC}"
         echo -e "${YELLOW}      changes (dialout/uucp) to take effect.${NC}"
+    fi
+    
+    if [ "$IS_VM" = true ] || [ "$IS_CONTAINER" = true ]; then
+        echo ""
+        echo -e "${PURPLE}Troubleshooting (VM/Container):${NC}"
+        echo -e "${BLUE}  If unable to access from host machine:${NC}"
+        echo -e "${BLUE}    1. Verify port listening: ss -tulpen | grep $MESHCHAT_PORT${NC}"
+        echo -e "${BLUE}    2. Check hypervisor port forwarding settings${NC}"
+        echo -e "${BLUE}    3. Try SSH tunnel: ssh -L $MESHCHAT_PORT:localhost:$MESHCHAT_PORT user@vm-ip${NC}"
     fi
     
     echo ""
@@ -1124,17 +1314,22 @@ trap cleanup_on_failure ERR
 
 if [ "$EUID" -ne 0 ]; then
     echo -e "${RED}Please run with sudo${NC}"
+    echo -e "${CYAN}Example: sudo ./deploy_rns.sh${NC}"
     log_message "ERROR: Not run as root"
     exit 1
 fi
 
-echo -e "${PURPLE}[1/16] Detecting OS...${NC}"
+echo -e "${PURPLE}[1/18] Detecting OS...${NC}"
 detect_os
 
-echo -e "${PURPLE}[2/16] Checking disk space...${NC}"
+echo -e "${PURPLE}[2/18] Detecting environment...${NC}"
+detect_virtualization
+
+echo -e "${PURPLE}[3/18] Checking disk space...${NC}"
 check_disk_space
 
 ask_vps_backbone
+ask_meshchat_binding
 
 if [ "$OS_TYPE" = "debian" ]; then
     FINAL_PACKAGES=("${DEBIAN_PACKAGES[@]}")
@@ -1154,43 +1349,50 @@ else
     fi
 fi
 
-echo -e "${PURPLE}[3/16] Detecting binaries...${NC}"
+echo -e "${PURPLE}[4/18] Detecting binaries...${NC}"
 detect_binary_paths
 
-echo -e "${PURPLE}[4/16] Installing system packages...${NC}"
+echo -e "${PURPLE}[5/18] Installing system packages...${NC}"
 install_system_packages "${FINAL_PACKAGES[@]}"
 
-echo -e "${PURPLE}[5/16] Checking pip...${NC}"
+echo -e "${PURPLE}[6/18] Checking pip...${NC}"
 bootstrap_pip
 
-echo -e "${PURPLE}[6/16] Installing Python packages...${NC}"
+echo -e "${PURPLE}[7/18] Configuring user PATH...${NC}"
+ensure_user_path
+
+echo -e "${PURPLE}[8/18] Installing Python packages...${NC}"
 install_python_packages "${PYTHON_PACKAGES[@]}"
 
-echo -e "${PURPLE}[7/16] Installing MeshChat...${NC}"
+echo -e "${PURPLE}[9/18] Installing MeshChat...${NC}"
 clone_and_build_repo
 
-echo -e "${PURPLE}[8/16] Configuring Reticulum...${NC}"
+echo -e "${PURPLE}[10/18] Configuring Reticulum...${NC}"
 configure_reticulum
 
-echo -e "${PURPLE}[9/16] Creating utility scripts...${NC}"
+echo -e "${PURPLE}[11/18] Creating utility scripts...${NC}"
 create_rnode_detector
 create_serial_udev_rules
 
-echo -e "${PURPLE}[10/16] Creating services...${NC}"
+echo -e "${PURPLE}[12/18] Creating services...${NC}"
 create_systemd_services
 
-echo -e "${PURPLE}[11/16] Creating shortcuts...${NC}"
+echo -e "${PURPLE}[13/18] Creating shortcuts...${NC}"
 create_desktop_shortcuts
 
-echo -e "${PURPLE}[12/16] Starting services...${NC}"
+echo -e "${PURPLE}[14/18] Starting services...${NC}"
 start_services
 
-echo -e "${PURPLE}[13/16] Network setup...${NC}"
+echo -e "${PURPLE}[15/18] Network setup...${NC}"
 setup_wireguard
 
-echo -e "${PURPLE}[14/16] Checking status...${NC}"
+echo -e "${PURPLE}[16/18] Checking status...${NC}"
 check_service_status
 
+echo -e "${PURPLE}[17/18] Verifying network access...${NC}"
+verify_network_access
+
+echo -e "${PURPLE}[18/18] Finalizing...${NC}"
 print_completion
 
 exit 0
