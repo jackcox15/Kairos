@@ -4,8 +4,8 @@
 **The goal of Kairos is to make decentralized mesh communication easy to deploy and accessible to anyone.**
 
 This installer helps you quickly set up:
-- Local Reticulum mesh networks for your community
-- Optional VPS backbone for global connectivity
+- Local Reticulum mesh networks for you or your community
+- Optional VPS backbone for global connectivity, if hosting one
 - All necessary software and services configured automatically
 
 ---
@@ -34,7 +34,7 @@ Deploy a standalone mesh network:
 - No external dependencies
 
 ### Mode 2: VPS Backbone (Optional)
-Add global connectivity to your local mesh:
+Add global connectivity to your local mesh with Wireguard Tunnels:
 - Connect your local mesh to your VPS infrastructure 
 - Requires WireGuard VPN credentials (you deploy your own VPS)
 - Enables communication across cities/regions when internet available
